@@ -30,7 +30,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-3";
+  const APP_VERSION = "2026.04.13-4";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -43,7 +43,10 @@
   const addBlockedButton = document.getElementById("addBlockedButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
   const buildVersion = document.getElementById("buildVersion");
+  const buildVersionTop = document.getElementById("buildVersionTop");
   const status = document.getElementById("status");
+  const debugLogEl = document.getElementById("debugLog");
+  const clearDebugButton = document.getElementById("clearDebugButton");
   const canvas = document.getElementById("resultCanvas");
   const ctx = canvas.getContext("2d");
   const isTouchDevice =
@@ -60,11 +63,29 @@
   let busy = false;
   let detectorProfile = "tiny";
   let mosaicLayerCache = { pixelSize: null, canvas: null };
+  let debugLogLines = [];
 
   if (buildVersion) buildVersion.textContent = APP_VERSION;
+  if (buildVersionTop) buildVersionTop.textContent = APP_VERSION;
+
+  function logDebug(message) {
+    const now = new Date();
+    const ts = `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+    const line = `[${ts}] ${message}`;
+    debugLogLines.push(line);
+    if (debugLogLines.length > 120) debugLogLines = debugLogLines.slice(-120);
+    if (debugLogEl) {
+      debugLogEl.textContent = debugLogLines.join("\n");
+      debugLogEl.scrollTop = debugLogEl.scrollHeight;
+    }
+  }
 
   function setStatus(text) {
     status.textContent = text;
+    logDebug(`status: ${text}`);
   }
 
   function degToRad(deg) {
@@ -187,8 +208,10 @@
     for (const src of sources) {
       try {
         await loadScript(src);
+        logDebug(`script loaded: ${src}`);
         return src;
       } catch (err) {
+        logDebug(`script load failed: ${src} (${err?.message || err})`);
         lastError = err;
       }
     }
@@ -200,8 +223,10 @@
     for (const baseUrl of MODEL_BASE_URLS) {
       try {
         await loader(baseUrl);
+        logDebug(`model loaded from: ${baseUrl}`);
         return;
       } catch (err) {
+        logDebug(`model load failed: ${baseUrl} (${err?.message || err})`);
         lastError = err;
       }
     }
@@ -216,8 +241,10 @@
       try {
         await tf.setBackend("cpu");
         if (typeof tf.ready === "function") await tf.ready();
+        logDebug("tf backend forced to cpu");
       } catch {
         // keep existing backend
+        logDebug("tf backend cpu force failed");
       }
     }
   }
@@ -231,6 +258,7 @@
         window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
       );
       detectorProfile = "ssd";
+      logDebug("detector profile: ssd");
       return;
     } catch (ssdErr) {
       try {
@@ -241,6 +269,7 @@
           window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
         );
         detectorProfile = "tiny";
+        logDebug("detector profile: tiny");
         return;
       } catch (tinyErr) {
         throw tinyErr || ssdErr || new Error("Model load failed.");
@@ -279,12 +308,15 @@
         }
         if (!backendReady && typeof tf.ready === "function") await tf.ready();
         const current = typeof tf.getBackend === "function" ? tf.getBackend() : "unknown";
+        logDebug(`tf backend current: ${current}`);
         if (current === "wasm") {
           try {
             await tf.setBackend("cpu");
             if (typeof tf.ready === "function") await tf.ready();
+            logDebug("tf backend switched wasm -> cpu");
           } catch {
             // keep current backend if cpu switch failed
+            logDebug("tf backend switch wasm -> cpu failed");
           }
         }
       } catch (err) {
@@ -1053,6 +1085,7 @@
   }
 
   async function loadImageFile(file) {
+    logDebug(`file selected: ${file?.name || "unknown"} type=${file?.type || "unknown"} size=${file?.size || 0}`);
     if (!file || (!file.type?.startsWith("image/") && !/\.(heic|heif|jpg|jpeg|png|webp)$/i.test(file.name || ""))) {
       setStatus("画像ファイル（png/jpg/webpなど）を選択してください。");
       return;
@@ -1072,8 +1105,10 @@
       if (!image.naturalWidth || !image.naturalHeight) {
         throw new Error("Image has invalid dimensions");
       }
+      logDebug(`image loaded: ${image.naturalWidth}x${image.naturalHeight}`);
     } catch (err) {
       console.error(err);
+      logDebug(`image load error: ${err?.message || err}`);
       setStatus("画像の読み込みに失敗しました。別の写真で試してください。");
       setBusy(false);
       return;
@@ -1123,15 +1158,18 @@
     pickButton.addEventListener("click", openPicker);
     pickButton.addEventListener("touchend", (event) => {
       event.preventDefault();
+      logDebug("pickButton touchend");
       openPicker();
     });
     pickButton.addEventListener("pointerup", (event) => {
       if (event.pointerType === "touch") {
         event.preventDefault();
+        logDebug("pickButton pointerup touch");
         openPicker();
       }
     });
     fileInput.addEventListener("change", () => {
+      logDebug(`file input change: count=${fileInput.files?.length || 0}`);
       const file = fileInput.files?.[0];
       if (file) {
         loadImageFile(file);
@@ -1140,6 +1178,13 @@
       }
       fileInput.value = "";
     });
+
+    if (clearDebugButton) {
+      clearDebugButton.addEventListener("click", () => {
+        debugLogLines = [];
+        if (debugLogEl) debugLogEl.textContent = "[cleared]";
+      });
+    }
 
     processButton.addEventListener("click", () => processCurrentImage());
     addMosaicButton.addEventListener("click", () => addEffect("mosaic"));
@@ -1188,6 +1233,7 @@
   }
 
   async function start() {
+    logDebug(`app start: version ${APP_VERSION}`);
     setupDnD();
     setupEvents();
     setBusy(true);

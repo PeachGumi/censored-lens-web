@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./styles.css?v=2026.04.13-3" />
   </head>
   <body>
+    <div class="buildBadge" aria-label="ビルド番号">Build: <span id="buildVersionTop">2026.04.13-4</span></div>
     <main class="app">
       <header class="header">
         <h1>Image Censor Studio</h1>
@@ -50,9 +51,16 @@
       <section class="saveBar" aria-label="保存操作">
         <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
       </section>
-      <p class="buildInfo">Build: <span id="buildVersion">2026.04.13-3</span></p>
+      <p class="buildInfo">Build: <span id="buildVersion">2026.04.13-4</span></p>
+      <section class="debugPanel" aria-label="デバッグログ">
+        <div class="debugHeader">
+          <strong>Debug Log</strong>
+          <button id="clearDebugButton" type="button">クリア</button>
+        </div>
+        <pre id="debugLog" class="debugLog">[init] debug panel ready</pre>
+      </section>
     </main>
 
-    <script src="./app.js?v=2026.04.13-3"></script>
+    <script src="./app.js?v=2026.04.13-4"></script>
   </body>
 </html>
