@@ -20,11 +20,6 @@ body {
   font-size: 28px;
 }
 
-.header p {
-  margin: 0 0 16px;
-  opacity: 0.85;
-}
-
 .dropzone {
   border: 2px dashed #6e7e96;
   border-radius: 12px;
@@ -154,11 +149,21 @@ button:disabled {
 .actionGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .actionGrid button {
   width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+#processButton {
+  background: linear-gradient(135deg, #ff4d9d, #ff2d8a);
+}
+
+#processButton:disabled {
+  background: linear-gradient(135deg, #8f5674, #6f425a);
 }
 
 .saveBar {
@@ -240,10 +245,7 @@ button:disabled {
 
   .header h1 {
     font-size: 24px;
-  }
-
-  .header p {
-    font-size: 14px;
+    margin-bottom: 6px;
   }
 
   .dropzone {
@@ -274,7 +276,7 @@ button:disabled {
   }
 
   .actionGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .saveBar {

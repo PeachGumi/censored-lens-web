@@ -29,10 +29,10 @@
   const MOUTH_EYE_Y_RATIO_MAX = 0.9;
   const NOSE_CENTER_X_TOL_RATIO = 0.34;
   const EYE_LABEL_TEXT = "BLOCKED";
-  const HANDLE_SIZE = 18;
+  const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-12";
+  const APP_VERSION = "2026.04.13-13";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -466,7 +466,7 @@
     if (!effect || !isEffectVisible(effect)) return;
 
     const corners = getRotatedCorners(effect);
-    const visualHandleSize = isTouchDevice ? HANDLE_SIZE * 1.2 : HANDLE_SIZE;
+    const visualHandleSize = isTouchDevice ? HANDLE_SIZE * 1.35 : HANDLE_SIZE;
     const rotateHandle = getRotateHandlePoint(effect);
     const topCenter = fromLocalPoint(
       { x: 0, y: -effect.height / 2 },
@@ -973,7 +973,7 @@
   }
 
   function hitHandle(effect, point) {
-    const hitRadius = isTouchDevice ? HANDLE_SIZE * 1.4 : HANDLE_SIZE;
+    const hitRadius = isTouchDevice ? HANDLE_SIZE * 1.7 : HANDLE_SIZE;
     const corners = getRotatedCorners(effect);
     for (const [name, h] of Object.entries(corners)) {
       if (pointNear(point, h, hitRadius)) return { mode: "resize", handle: name };
