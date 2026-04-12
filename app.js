@@ -1,7 +1,12 @@
 (function () {
-  const FACE_API_CDN = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js";
+  const FACE_API_SOURCES = [
+    "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js",
+    "https://unpkg.com/@vladmandic/face-api/dist/face-api.min.js"
+  ];
   const MODEL_BASE_URLS = [
+    "./models",
     "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/",
+    "https://unpkg.com/@vladmandic/face-api/model/",
     "https://justadudewhohacks.github.io/face-api.js/models"
   ];
 
@@ -173,6 +178,19 @@
     });
   }
 
+  async function loadScriptFromAnySource(sources) {
+    let lastError = null;
+    for (const src of sources) {
+      try {
+        await loadScript(src);
+        return src;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError || new Error("Script load failed.");
+  }
+
   async function loadNetFromAnySource(loader) {
     let lastError = null;
     for (const baseUrl of MODEL_BASE_URLS) {
@@ -187,7 +205,7 @@
   }
 
   async function loadModels() {
-    await loadScript(FACE_API_CDN);
+    await loadScriptFromAnySource(FACE_API_SOURCES);
     if (!window.faceapi) throw new Error("face-api.js could not be loaded.");
 
     try {
@@ -210,7 +228,7 @@
         detectorProfile = "tiny";
         return;
       } catch (tinyErr) {
-        throw tinyErr || ssdErr;
+        throw tinyErr || ssdErr || new Error("Model load failed.");
       }
     }
   }
@@ -1087,7 +1105,7 @@
       );
     } catch (err) {
       console.error(err);
-      setStatus("モデル読み込みに失敗しました。通信環境を確認してください。");
+      setStatus(`モデル読み込みに失敗しました: ${err?.message || "通信環境を確認してください。"}`);
     } finally {
       setBusy(false);
       refreshButtons();
