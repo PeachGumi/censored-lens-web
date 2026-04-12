@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-10";
+  const APP_VERSION = "2026.04.13-11";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");

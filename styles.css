@@ -285,8 +285,9 @@ button:disabled {
 
 @media (max-width: 768px) {
   .app {
-    width: min(980px, 96vw);
+    width: 100vw;
     margin: 54px auto 20px;
+    padding: 0 0 8px;
   }
 
   .header h1 {
@@ -356,9 +357,23 @@ button:disabled {
   }
 
   .preview {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
     min-height: 220px;
-    height: min(48vh, 460px);
-    padding: 6px;
+    height: min(52vh, 520px);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 0;
+  }
+
+  .canvas {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    border-radius: 0;
   }
 
   .debugLog {
