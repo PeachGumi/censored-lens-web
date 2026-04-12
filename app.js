@@ -30,6 +30,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
+  const APP_VERSION = "2026.04.13-1";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -41,6 +42,7 @@
   const addMosaicButton = document.getElementById("addMosaicButton");
   const addBlockedButton = document.getElementById("addBlockedButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
+  const buildVersion = document.getElementById("buildVersion");
   const status = document.getElementById("status");
   const canvas = document.getElementById("resultCanvas");
   const ctx = canvas.getContext("2d");
@@ -58,6 +60,8 @@
   let busy = false;
   let detectorProfile = "tiny";
   let mosaicLayerCache = { pixelSize: null, canvas: null };
+
+  if (buildVersion) buildVersion.textContent = APP_VERSION;
 
   function setStatus(text) {
     status.textContent = text;
@@ -210,18 +214,39 @@
     if (window.faceapi.tf) {
       const tf = window.faceapi.tf;
       try {
-        if (typeof tf.setBackend === "function") {
+        if (typeof tf.enableProdMode === "function") tf.enableProdMode();
+        if (typeof tf.env === "function") {
           try {
-            await tf.setBackend("webgl");
+            tf.env().set("WASM_HAS_SIMD_SUPPORT", false);
+            tf.env().set("WASM_HAS_MULTITHREAD_SUPPORT", false);
           } catch {
+            // env keys may differ by runtime
+          }
+        }
+        const backendOrder = isTouchDevice ? ["webgl", "cpu", "wasm"] : ["webgl", "wasm", "cpu"];
+        let backendReady = false;
+        if (typeof tf.setBackend === "function") {
+          for (const backend of backendOrder) {
             try {
-              await tf.setBackend("cpu");
+              await tf.setBackend(backend);
+              if (typeof tf.ready === "function") await tf.ready();
+              backendReady = true;
+              break;
             } catch {
-              // fall through to ready()
+              // try next backend
             }
           }
         }
-        if (typeof tf.ready === "function") await tf.ready();
+        if (!backendReady && typeof tf.ready === "function") await tf.ready();
+        const current = typeof tf.getBackend === "function" ? tf.getBackend() : "unknown";
+        if (current === "wasm") {
+          try {
+            await tf.setBackend("cpu");
+            if (typeof tf.ready === "function") await tf.ready();
+          } catch {
+            // keep current backend if cpu switch failed
+          }
+        }
       } catch (err) {
         throw new Error(`TensorFlow backend init failed: ${err?.message || err}`);
       }

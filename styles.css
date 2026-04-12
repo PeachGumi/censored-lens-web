@@ -139,6 +139,13 @@ button:disabled {
   background: #1a6448;
 }
 
+.buildInfo {
+  margin: 8px 2px 0;
+  font-size: 11px;
+  color: #8c98ac;
+  text-align: right;
+}
+
 .status {
   margin: 8px 0 10px;
   min-height: 1.25em;
