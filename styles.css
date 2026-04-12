@@ -10,24 +10,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.buildBadge {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 30;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(34, 160, 107, 0.95);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-}
-
 .app {
   width: min(980px, 94vw);
-  margin: 56px auto 36px;
+  margin: 18px auto 36px;
 }
 
 .header h1 {
@@ -101,6 +86,12 @@ button {
   color: #fff;
   min-height: 44px;
   touch-action: manipulation;
+}
+
+.smallPickButton {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
 }
 
 button:disabled {
@@ -191,56 +182,6 @@ button:disabled {
   background: #1a6448;
 }
 
-.buildInfo {
-  margin: 8px 2px 0;
-  font-size: 11px;
-  color: #8c98ac;
-  text-align: right;
-}
-
-.debugPanel {
-  margin-top: 10px;
-  border: 1px solid #2b3448;
-  border-radius: 10px;
-  background: #0d121b;
-  overflow: hidden;
-}
-
-.debugHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background: #141c2a;
-  border-bottom: 1px solid #253149;
-  font-size: 12px;
-}
-
-.debugActions {
-  display: flex;
-  gap: 6px;
-}
-
-.debugHeader button {
-  min-height: 30px;
-  padding: 4px 8px;
-  font-size: 11px;
-  background: #2d3b52;
-}
-
-.debugLog {
-  margin: 0;
-  padding: 10px;
-  max-height: 180px;
-  overflow: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #c8d5e9;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 .status {
   margin: 8px 0 10px;
   min-height: 1.25em;
@@ -271,6 +212,12 @@ button:disabled {
   padding: 10px;
 }
 
+.imagePickerCompact {
+  margin: 8px 0 4px;
+  display: flex;
+  justify-content: center;
+}
+
 .canvas {
   display: block;
   width: auto;
@@ -281,12 +228,13 @@ button:disabled {
   background: transparent;
   cursor: default;
   touch-action: none;
+  object-fit: contain;
 }
 
 @media (max-width: 768px) {
   .app {
     width: 100vw;
-    margin: 54px auto 20px;
+    margin: 12px auto 20px;
     padding: 0 0 8px;
   }
 
@@ -343,13 +291,6 @@ button:disabled {
     font-size: 12px;
   }
 
-  .buildBadge {
-    top: 8px;
-    right: 8px;
-    font-size: 10px;
-    padding: 5px 8px;
-  }
-
   .editorHelp {
     margin: 0 0 6px;
     font-size: 11px;
@@ -369,15 +310,8 @@ button:disabled {
   }
 
   .canvas {
-    width: 100%;
-    max-width: 100%;
+    width: auto;
     height: auto;
-    max-height: 100%;
     border-radius: 0;
-  }
-
-  .debugLog {
-    max-height: 100px;
-    font-size: 10px;
   }
 }

@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.13-11" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.13-12" />
   </head>
   <body>
-    <div class="buildBadge" aria-label="ビルド番号">Build: <span id="buildVersionTop">2026.04.13-11</span></div>
     <main class="app">
       <header class="header">
         <h1>Image Censor Studio</h1>
@@ -22,6 +21,9 @@
 
       <section class="preview" aria-label="画像プレビュー領域">
         <canvas id="resultCanvas" class="canvas" aria-label="処理結果"></canvas>
+      </section>
+      <section id="imagePickerCompact" class="imagePickerCompact" hidden>
+        <label id="changeImageButton" class="pickButton smallPickButton" for="fileInput">別の画像を選択</label>
       </section>
 
       <section class="controls compactControls">
@@ -51,19 +53,8 @@
       <section class="saveBar" aria-label="保存操作">
         <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
       </section>
-      <p class="buildInfo">Build: <span id="buildVersion">2026.04.13-11</span></p>
-      <section class="debugPanel" aria-label="デバッグログ">
-        <div class="debugHeader">
-          <strong>Debug Log</strong>
-          <div class="debugActions">
-            <button id="copyDebugButton" type="button">コピー</button>
-            <button id="clearDebugButton" type="button">クリア</button>
-          </div>
-        </div>
-        <pre id="debugLog" class="debugLog">[init] debug panel ready</pre>
-      </section>
     </main>
 
-    <script src="./app.js?v=2026.04.13-11"></script>
+    <script src="./app.js?v=2026.04.13-12"></script>
   </body>
 </html>

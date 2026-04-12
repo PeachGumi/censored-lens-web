@@ -32,9 +32,10 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-11";
+  const APP_VERSION = "2026.04.13-12";
 
   const dropzone = document.getElementById("dropzone");
+  const imagePickerCompact = document.getElementById("imagePickerCompact");
   const fileInput = document.getElementById("fileInput");
   const pickButton = document.getElementById("pickButton");
   const processButton = document.getElementById("processButton");
@@ -44,12 +45,7 @@
   const addMosaicButton = document.getElementById("addMosaicButton");
   const addBlockedButton = document.getElementById("addBlockedButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
-  const buildVersion = document.getElementById("buildVersion");
-  const buildVersionTop = document.getElementById("buildVersionTop");
   const status = document.getElementById("status");
-  const debugLogEl = document.getElementById("debugLog");
-  const clearDebugButton = document.getElementById("clearDebugButton");
-  const copyDebugButton = document.getElementById("copyDebugButton");
   const canvas = document.getElementById("resultCanvas");
   const ctx = canvas.getContext("2d");
   const isTouchDevice =
@@ -68,9 +64,6 @@
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
 
-  if (buildVersion) buildVersion.textContent = APP_VERSION;
-  if (buildVersionTop) buildVersionTop.textContent = APP_VERSION;
-
   function logDebug(message) {
     const now = new Date();
     const ts = `${now.getHours().toString().padStart(2, "0")}:${now
@@ -80,39 +73,18 @@
     const line = `[${ts}] ${message}`;
     debugLogLines.push(line);
     if (debugLogLines.length > 120) debugLogLines = debugLogLines.slice(-120);
-    if (debugLogEl) {
-      debugLogEl.textContent = debugLogLines.join("\n");
-      debugLogEl.scrollTop = debugLogEl.scrollHeight;
-    }
-  }
-
-  async function copyDebugLog() {
-    const text = debugLogLines.join("\n");
-    if (!text) return;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-      }
-      setStatus("デバッグログをコピーしました。");
-    } catch (err) {
-      logDebug(`copy failed: ${err?.message || err}`);
-      setStatus("ログコピーに失敗しました。手動で選択してください。");
-    }
+    // no-op on UI; keep in-memory trace for potential future debugging
   }
 
   function setStatus(text) {
     status.textContent = text;
     logDebug(`status: ${text}`);
+  }
+
+  function updateImagePickerVisibility() {
+    const hasImage = Boolean(sourceImage && baseCanvas);
+    dropzone.hidden = hasImage;
+    if (imagePickerCompact) imagePickerCompact.hidden = !hasImage;
   }
 
   function degToRad(deg) {
@@ -197,6 +169,7 @@
     addMosaicButton.disabled = busy || !hasImage;
     addBlockedButton.disabled = busy || !hasImage;
     deleteEffectButton.disabled = busy || selectedEffectId == null;
+    updateImagePickerVisibility();
   }
 
   function setBusy(nextBusy) {
@@ -1233,14 +1206,6 @@
       fileInput.value = "";
     });
 
-    if (clearDebugButton) {
-      clearDebugButton.addEventListener("click", () => {
-        debugLogLines = [];
-        if (debugLogEl) debugLogEl.textContent = "[cleared]";
-      });
-    }
-    if (copyDebugButton) copyDebugButton.addEventListener("click", () => copyDebugLog());
-
     processButton.addEventListener("click", () => processCurrentImage());
     addMosaicButton.addEventListener("click", () => addEffect("mosaic"));
     addBlockedButton.addEventListener("click", () => addEffect("blocked"));
@@ -1291,6 +1256,7 @@
     logDebug(`app start: version ${APP_VERSION}`);
     setupDnD();
     setupEvents();
+    updateImagePickerVisibility();
     setBusy(true);
     try {
       await loadModels();
