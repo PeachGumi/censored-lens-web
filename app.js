@@ -11,8 +11,9 @@
   ];
 
   const MAX_RENDER_EDGE = 1600;
+  const MOBILE_RENDER_EDGE = 1024;
   const DETECT_MAX_EDGE = 1280;
-  const MOBILE_DETECT_MAX_EDGE = 640;
+  const MOBILE_DETECT_MAX_EDGE = 384;
   const SSD_SCORE_THRESHOLD = 0.56;
   const TINY_SCORE_THRESHOLD = 0.4;
   const BOX_EXPAND_RATIO = 0.14;
@@ -31,7 +32,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-7";
+  const APP_VERSION = "2026.04.13-8";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -326,7 +327,7 @@
             // env keys may differ by runtime
           }
         }
-        const backendOrder = isTouchDevice ? ["webgl", "cpu", "wasm"] : ["webgl", "wasm", "cpu"];
+        const backendOrder = isTouchDevice ? ["wasm", "webgl", "cpu"] : ["webgl", "wasm", "cpu"];
         let backendReady = false;
         if (typeof tf.setBackend === "function") {
           for (const backend of backendOrder) {
@@ -343,7 +344,7 @@
         if (!backendReady && typeof tf.ready === "function") await tf.ready();
         const current = typeof tf.getBackend === "function" ? tf.getBackend() : "unknown";
         logDebug(`tf backend current: ${current}`);
-        if (current === "wasm") {
+        if (!isTouchDevice && current === "wasm") {
           try {
             await tf.setBackend("cpu");
             if (typeof tf.ready === "function") await tf.ready();
@@ -381,7 +382,11 @@
   }
 
   function buildBaseCanvas(image) {
-    const fitted = fitSize(image.naturalWidth, image.naturalHeight, MAX_RENDER_EDGE);
+    const fitted = fitSize(
+      image.naturalWidth,
+      image.naturalHeight,
+      isTouchDevice ? MOBILE_RENDER_EDGE : MAX_RENDER_EDGE
+    );
     const out = document.createElement("canvas");
     out.width = fitted.width;
     out.height = fitted.height;
@@ -810,8 +815,8 @@
       return window.faceapi.detectAllFaces(
         detectCanvas,
         new window.faceapi.TinyFaceDetectorOptions({
-          inputSize: detectSize.width >= 520 || detectSize.height >= 520 ? 416 : 320,
-          scoreThreshold: Math.max(0.48, TINY_SCORE_THRESHOLD)
+          inputSize: detectSize.width >= 360 || detectSize.height >= 360 ? 320 : 256,
+          scoreThreshold: Math.max(0.5, TINY_SCORE_THRESHOLD)
         })
       );
     }
@@ -916,6 +921,9 @@
 
     setBusy(true);
     setStatus(isTouchDevice ? "顔を検出中...（軽量モード）" : "顔を検出中...");
+    if (isTouchDevice) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
 
     try {
       const faces = await detectFaces();
