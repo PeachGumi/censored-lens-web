@@ -12,6 +12,7 @@
 
   const MAX_RENDER_EDGE = 1600;
   const DETECT_MAX_EDGE = 1280;
+  const MOBILE_DETECT_MAX_EDGE = 640;
   const SSD_SCORE_THRESHOLD = 0.56;
   const TINY_SCORE_THRESHOLD = 0.4;
   const BOX_EXPAND_RATIO = 0.14;
@@ -30,7 +31,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-6";
+  const APP_VERSION = "2026.04.13-7";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -275,6 +276,14 @@
   }
 
   async function tryLoadDetectionNets() {
+    if (isTouchDevice) {
+      await loadNetFromAnySource((baseUrl) =>
+        window.faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl)
+      );
+      detectorProfile = "tiny-mobile";
+      logDebug("detector profile: tiny-mobile");
+      return;
+    }
     try {
       await loadNetFromAnySource((baseUrl) =>
         window.faceapi.nets.ssdMobilenetv1.loadFromUri(baseUrl)
@@ -722,6 +731,17 @@
     return true;
   }
 
+  function isLikelyFaceDetectionMobile(box, score, imageWidth, imageHeight) {
+    if (score < Math.max(0.5, TINY_SCORE_THRESHOLD)) return false;
+    if (box.width < 28 || box.height < 28) return false;
+    const area = box.width * box.height;
+    const areaRatio = area / Math.max(1, imageWidth * imageHeight);
+    if (areaRatio < MIN_FACE_AREA_RATIO || areaRatio > 0.72) return false;
+    const aspect = box.width / Math.max(1, box.height);
+    if (aspect < 0.52 || aspect > 1.95) return false;
+    return true;
+  }
+
   function clampRect(rect, maxW, maxH) {
     let x = rect.x;
     let y = rect.y;
@@ -786,6 +806,15 @@
   }
 
   async function runDetectionWithLandmarks(detectCanvas, detectSize) {
+    if (isTouchDevice) {
+      return window.faceapi.detectAllFaces(
+        detectCanvas,
+        new window.faceapi.TinyFaceDetectorOptions({
+          inputSize: detectSize.width >= 520 || detectSize.height >= 520 ? 416 : 320,
+          scoreThreshold: Math.max(0.48, TINY_SCORE_THRESHOLD)
+        })
+      );
+    }
     if (detectorProfile === "ssd") {
       return window.faceapi
         .detectAllFaces(
@@ -810,7 +839,11 @@
   }
 
   async function detectFaces() {
-    const detectSize = fitSize(baseCanvas.width, baseCanvas.height, DETECT_MAX_EDGE);
+    const detectSize = fitSize(
+      baseCanvas.width,
+      baseCanvas.height,
+      isTouchDevice ? MOBILE_DETECT_MAX_EDGE : DETECT_MAX_EDGE
+    );
     const detectCanvas = document.createElement("canvas");
     detectCanvas.width = detectSize.width;
     detectCanvas.height = detectSize.height;
@@ -851,16 +884,19 @@
         };
       })
       .filter(Boolean)
-      .filter((item) =>
-        isLikelyFaceDetection(
+      .filter((item) => {
+        if (isTouchDevice) {
+          return isLikelyFaceDetectionMobile(item.box, item.score, baseCanvas.width, baseCanvas.height);
+        }
+        return isLikelyFaceDetection(
           item.box,
           item.score,
           item.eyes,
           item.features,
           baseCanvas.width,
           baseCanvas.height
-        )
-      );
+        );
+      });
 
     return dedupeDetections(mapped).map((item) => {
       const faceRect = expandFaceBox(item.box, baseCanvas.width, baseCanvas.height);
@@ -879,7 +915,7 @@
     if (!sourceImage || !modelReady || !baseCanvas) return;
 
     setBusy(true);
-    setStatus("顔を検出中...");
+    setStatus(isTouchDevice ? "顔を検出中...（軽量モード）" : "顔を検出中...");
 
     try {
       const faces = await detectFaces();
