@@ -30,7 +30,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-1";
+  const APP_VERSION = "2026.04.13-3";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -208,6 +208,46 @@
     throw lastError || new Error("Model load failed.");
   }
 
+  async function ensureStableTfBackend() {
+    if (!window.faceapi?.tf) return;
+    const tf = window.faceapi.tf;
+    if (typeof tf.ready === "function") await tf.ready();
+    if (isTouchDevice && typeof tf.setBackend === "function") {
+      try {
+        await tf.setBackend("cpu");
+        if (typeof tf.ready === "function") await tf.ready();
+      } catch {
+        // keep existing backend
+      }
+    }
+  }
+
+  async function tryLoadDetectionNets() {
+    try {
+      await loadNetFromAnySource((baseUrl) =>
+        window.faceapi.nets.ssdMobilenetv1.loadFromUri(baseUrl)
+      );
+      await loadNetFromAnySource((baseUrl) =>
+        window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
+      );
+      detectorProfile = "ssd";
+      return;
+    } catch (ssdErr) {
+      try {
+        await loadNetFromAnySource((baseUrl) =>
+          window.faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl)
+        );
+        await loadNetFromAnySource((baseUrl) =>
+          window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
+        );
+        detectorProfile = "tiny";
+        return;
+      } catch (tinyErr) {
+        throw tinyErr || ssdErr || new Error("Model load failed.");
+      }
+    }
+  }
+
   async function loadModels() {
     await loadScriptFromAnySource(FACE_API_SOURCES);
     if (!window.faceapi) throw new Error("face-api.js could not be loaded.");
@@ -251,29 +291,15 @@
         throw new Error(`TensorFlow backend init failed: ${err?.message || err}`);
       }
     }
-
     try {
-      await loadNetFromAnySource((baseUrl) =>
-        window.faceapi.nets.ssdMobilenetv1.loadFromUri(baseUrl)
-      );
-      await loadNetFromAnySource((baseUrl) =>
-        window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
-      );
-      detectorProfile = "ssd";
-      return;
-    } catch (ssdErr) {
-      try {
-        await loadNetFromAnySource((baseUrl) =>
-          window.faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl)
-        );
-        await loadNetFromAnySource((baseUrl) =>
-          window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
-        );
-        detectorProfile = "tiny";
+      await tryLoadDetectionNets();
+    } catch (err) {
+      if (String(err?.message || err).includes("highest priority backend 'wasm'")) {
+        await ensureStableTfBackend();
+        await tryLoadDetectionNets();
         return;
-      } catch (tinyErr) {
-        throw tinyErr || ssdErr || new Error("Model load failed.");
       }
+      throw err;
     }
   }
 
@@ -1027,7 +1053,7 @@
   }
 
   async function loadImageFile(file) {
-    if (!file || !file.type.startsWith("image/")) {
+    if (!file || (!file.type?.startsWith("image/") && !/\.(heic|heif|jpg|jpeg|png|webp)$/i.test(file.name || ""))) {
       setStatus("画像ファイル（png/jpg/webpなど）を選択してください。");
       return;
     }
@@ -1035,6 +1061,7 @@
     setBusy(true);
     setStatus("画像を読み込み中...");
     const image = new Image();
+    image.crossOrigin = "anonymous";
     const blobUrl = URL.createObjectURL(file);
     try {
       await new Promise((resolve, reject) => {
@@ -1042,6 +1069,9 @@
         image.onerror = () => reject(new Error("Image load failed"));
         image.src = blobUrl;
       });
+      if (!image.naturalWidth || !image.naturalHeight) {
+        throw new Error("Image has invalid dimensions");
+      }
     } catch (err) {
       console.error(err);
       setStatus("画像の読み込みに失敗しました。別の写真で試してください。");
@@ -1082,10 +1112,32 @@
   }
 
   function setupEvents() {
-    pickButton.addEventListener("click", () => fileInput.click());
+    const openPicker = () => {
+      if (busy) return;
+      try {
+        fileInput.click();
+      } catch {
+        setStatus("画像選択を開けませんでした。再度タップしてください。");
+      }
+    };
+    pickButton.addEventListener("click", openPicker);
+    pickButton.addEventListener("touchend", (event) => {
+      event.preventDefault();
+      openPicker();
+    });
+    pickButton.addEventListener("pointerup", (event) => {
+      if (event.pointerType === "touch") {
+        event.preventDefault();
+        openPicker();
+      }
+    });
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
-      if (file) loadImageFile(file);
+      if (file) {
+        loadImageFile(file);
+      } else if (isTouchDevice) {
+        setStatus("画像が選択されませんでした。写真アプリからもう一度選択してください。");
+      }
       fileInput.value = "";
     });
 
