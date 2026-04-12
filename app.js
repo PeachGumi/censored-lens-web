@@ -30,7 +30,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-4";
+  const APP_VERSION = "2026.04.13-5";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -47,6 +47,7 @@
   const status = document.getElementById("status");
   const debugLogEl = document.getElementById("debugLog");
   const clearDebugButton = document.getElementById("clearDebugButton");
+  const copyDebugButton = document.getElementById("copyDebugButton");
   const canvas = document.getElementById("resultCanvas");
   const ctx = canvas.getContext("2d");
   const isTouchDevice =
@@ -64,6 +65,7 @@
   let detectorProfile = "tiny";
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
+  let pickerOpenedAt = 0;
 
   if (buildVersion) buildVersion.textContent = APP_VERSION;
   if (buildVersionTop) buildVersionTop.textContent = APP_VERSION;
@@ -80,6 +82,30 @@
     if (debugLogEl) {
       debugLogEl.textContent = debugLogLines.join("\n");
       debugLogEl.scrollTop = debugLogEl.scrollHeight;
+    }
+  }
+
+  async function copyDebugLog() {
+    const text = debugLogLines.join("\n");
+    if (!text) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setStatus("デバッグログをコピーしました。");
+    } catch (err) {
+      logDebug(`copy failed: ${err?.message || err}`);
+      setStatus("ログコピーに失敗しました。手動で選択してください。");
     }
   }
 
@@ -1149,25 +1175,20 @@
   function setupEvents() {
     const openPicker = () => {
       if (busy) return;
+      const now = Date.now();
+      if (now - pickerOpenedAt < 900) {
+        logDebug("openPicker skipped: debounce");
+        return;
+      }
+      pickerOpenedAt = now;
       try {
+        logDebug("openPicker invoked");
         fileInput.click();
       } catch {
         setStatus("画像選択を開けませんでした。再度タップしてください。");
       }
     };
     pickButton.addEventListener("click", openPicker);
-    pickButton.addEventListener("touchend", (event) => {
-      event.preventDefault();
-      logDebug("pickButton touchend");
-      openPicker();
-    });
-    pickButton.addEventListener("pointerup", (event) => {
-      if (event.pointerType === "touch") {
-        event.preventDefault();
-        logDebug("pickButton pointerup touch");
-        openPicker();
-      }
-    });
     fileInput.addEventListener("change", () => {
       logDebug(`file input change: count=${fileInput.files?.length || 0}`);
       const file = fileInput.files?.[0];
@@ -1185,6 +1206,7 @@
         if (debugLogEl) debugLogEl.textContent = "[cleared]";
       });
     }
+    if (copyDebugButton) copyDebugButton.addEventListener("click", () => copyDebugLog());
 
     processButton.addEventListener("click", () => processCurrentImage());
     addMosaicButton.addEventListener("click", () => addEffect("mosaic"));

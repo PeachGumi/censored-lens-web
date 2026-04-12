@@ -51,16 +51,19 @@
       <section class="saveBar" aria-label="保存操作">
         <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
       </section>
-      <p class="buildInfo">Build: <span id="buildVersion">2026.04.13-4</span></p>
+      <p class="buildInfo">Build: <span id="buildVersion">2026.04.13-5</span></p>
       <section class="debugPanel" aria-label="デバッグログ">
         <div class="debugHeader">
           <strong>Debug Log</strong>
-          <button id="clearDebugButton" type="button">クリア</button>
+          <div class="debugActions">
+            <button id="copyDebugButton" type="button">コピー</button>
+            <button id="clearDebugButton" type="button">クリア</button>
+          </div>
         </div>
         <pre id="debugLog" class="debugLog">[init] debug panel ready</pre>
       </section>
     </main>
 
-    <script src="./app.js?v=2026.04.13-4"></script>
+    <script src="./app.js?v=2026.04.13-5"></script>
   </body>
 </html>
