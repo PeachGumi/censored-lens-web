@@ -30,7 +30,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-5";
+  const APP_VERSION = "2026.04.13-6";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -65,7 +65,6 @@
   let detectorProfile = "tiny";
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
-  let pickerOpenedAt = 0;
 
   if (buildVersion) buildVersion.textContent = APP_VERSION;
   if (buildVersionTop) buildVersionTop.textContent = APP_VERSION;
@@ -1168,27 +1167,17 @@
     dropzone.addEventListener("dragleave", onDragLeave);
     dropzone.addEventListener("drop", onDrop);
     dropzone.addEventListener("click", () => {
-      if (!busy) fileInput.click();
+      if (busy) return;
+      if (document.activeElement !== fileInput) {
+        logDebug("dropzone clicked: waiting for native picker");
+      }
     });
   }
 
   function setupEvents() {
-    const openPicker = () => {
-      if (busy) return;
-      const now = Date.now();
-      if (now - pickerOpenedAt < 900) {
-        logDebug("openPicker skipped: debounce");
-        return;
-      }
-      pickerOpenedAt = now;
-      try {
-        logDebug("openPicker invoked");
-        fileInput.click();
-      } catch {
-        setStatus("画像選択を開けませんでした。再度タップしてください。");
-      }
-    };
-    pickButton.addEventListener("click", openPicker);
+    pickButton.addEventListener("click", () => {
+      logDebug("pickButton clicked (native label)");
+    });
     fileInput.addEventListener("change", () => {
       logDebug(`file input change: count=${fileInput.files?.length || 0}`);
       const file = fileInput.files?.[0];
