@@ -13,7 +13,7 @@
   const MAX_RENDER_EDGE = 1600;
   const MOBILE_RENDER_EDGE = 1024;
   const DETECT_MAX_EDGE = 1280;
-  const MOBILE_DETECT_MAX_EDGE = 384;
+  const MOBILE_DETECT_MAX_EDGE = 512;
   const SSD_SCORE_THRESHOLD = 0.56;
   const TINY_SCORE_THRESHOLD = 0.4;
   const BOX_EXPAND_RATIO = 0.14;
@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 18;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-8";
+  const APP_VERSION = "2026.04.13-9";
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -737,13 +737,13 @@
   }
 
   function isLikelyFaceDetectionMobile(box, score, imageWidth, imageHeight) {
-    if (score < Math.max(0.5, TINY_SCORE_THRESHOLD)) return false;
-    if (box.width < 28 || box.height < 28) return false;
+    if (score < Math.max(0.3, TINY_SCORE_THRESHOLD * 0.82)) return false;
+    if (box.width < 20 || box.height < 20) return false;
     const area = box.width * box.height;
     const areaRatio = area / Math.max(1, imageWidth * imageHeight);
-    if (areaRatio < MIN_FACE_AREA_RATIO || areaRatio > 0.72) return false;
+    if (areaRatio < MIN_FACE_AREA_RATIO * 0.6 || areaRatio > 0.78) return false;
     const aspect = box.width / Math.max(1, box.height);
-    if (aspect < 0.52 || aspect > 1.95) return false;
+    if (aspect < 0.46 || aspect > 2.1) return false;
     return true;
   }
 
@@ -815,8 +815,8 @@
       return window.faceapi.detectAllFaces(
         detectCanvas,
         new window.faceapi.TinyFaceDetectorOptions({
-          inputSize: detectSize.width >= 360 || detectSize.height >= 360 ? 320 : 256,
-          scoreThreshold: Math.max(0.5, TINY_SCORE_THRESHOLD)
+          inputSize: detectSize.width >= 480 || detectSize.height >= 480 ? 416 : 320,
+          scoreThreshold: Math.max(0.3, TINY_SCORE_THRESHOLD * 0.82)
         })
       );
     }
