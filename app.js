@@ -207,6 +207,25 @@
   async function loadModels() {
     await loadScriptFromAnySource(FACE_API_SOURCES);
     if (!window.faceapi) throw new Error("face-api.js could not be loaded.");
+    if (window.faceapi.tf) {
+      const tf = window.faceapi.tf;
+      try {
+        if (typeof tf.setBackend === "function") {
+          try {
+            await tf.setBackend("webgl");
+          } catch {
+            try {
+              await tf.setBackend("cpu");
+            } catch {
+              // fall through to ready()
+            }
+          }
+        }
+        if (typeof tf.ready === "function") await tf.ready();
+      } catch (err) {
+        throw new Error(`TensorFlow backend init failed: ${err?.message || err}`);
+      }
+    }
 
     try {
       await loadNetFromAnySource((baseUrl) =>
