@@ -970,6 +970,8 @@
       return;
     }
 
+    setBusy(true);
+    setStatus("画像を読み込み中...");
     const image = new Image();
     const blobUrl = URL.createObjectURL(file);
     try {
@@ -978,6 +980,11 @@
         image.onerror = () => reject(new Error("Image load failed"));
         image.src = blobUrl;
       });
+    } catch (err) {
+      console.error(err);
+      setStatus("画像の読み込みに失敗しました。別の写真で試してください。");
+      setBusy(false);
+      return;
     } finally {
       URL.revokeObjectURL(blobUrl);
     }
