@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-13";
+  const APP_VERSION = "2026.04.13-14";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -84,7 +84,11 @@
   function updateImagePickerVisibility() {
     const hasImage = Boolean(sourceImage && baseCanvas);
     dropzone.hidden = hasImage;
-    if (imagePickerCompact) imagePickerCompact.hidden = !hasImage;
+    dropzone.classList.toggle("is-hidden", hasImage);
+    if (imagePickerCompact) {
+      imagePickerCompact.hidden = !hasImage;
+      imagePickerCompact.classList.toggle("is-hidden", !hasImage);
+    }
   }
 
   function degToRad(deg) {

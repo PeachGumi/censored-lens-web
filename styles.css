@@ -223,6 +223,10 @@ button:disabled {
   justify-content: center;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 .canvas {
   display: block;
   width: auto;
