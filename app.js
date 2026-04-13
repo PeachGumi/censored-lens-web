@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-14";
+  const APP_VERSION = "2026.04.13-15";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -79,6 +79,12 @@
   function setStatus(text) {
     status.textContent = text;
     logDebug(`status: ${text}`);
+  }
+
+  function waitForUiPaint() {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    });
   }
 
   function updateImagePickerVisibility() {
@@ -898,9 +904,7 @@
 
     setBusy(true);
     setStatus(isTouchDevice ? "顔を検出中...（軽量モード）" : "顔を検出中...");
-    if (isTouchDevice) {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    }
+    await waitForUiPaint();
 
     try {
       const faces = await detectFaces();
