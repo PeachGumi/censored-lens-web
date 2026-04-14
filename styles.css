@@ -203,6 +203,14 @@ button:disabled {
   color: #aebad0;
 }
 
+.buildInfo {
+  margin: 0 0 8px;
+  text-align: right;
+  font-size: 11px;
+  color: #7f8aa0;
+  letter-spacing: 0.02em;
+}
+
 .preview {
   width: 100%;
   min-height: 280px;

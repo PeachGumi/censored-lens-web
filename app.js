@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.13-15";
+  const APP_VERSION = "2026.04.15-02";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -40,6 +40,7 @@
   const pickButton = document.getElementById("pickButton");
   const processButton = document.getElementById("processButton");
   const downloadButton = document.getElementById("downloadButton");
+  const buildInfo = document.getElementById("buildInfo");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const blockedToggle = document.getElementById("blockedToggle");
   const addMosaicButton = document.getElementById("addMosaicButton");
@@ -57,6 +58,8 @@
       : Number.MAX_SAFE_INTEGER;
   const isSmallScreenDevice = smallestScreenEdge <= 900;
   const useMobileProfile = isMobileUserAgent || isSmallScreenDevice;
+  // Keep compatibility for existing interaction branches.
+  const isTouchDevice = useMobileProfile;
 
   let modelReady = false;
   let sourceImage = null;
@@ -1243,6 +1246,7 @@
 
   async function start() {
     logDebug(`app start: version ${APP_VERSION}`);
+    if (buildInfo) buildInfo.textContent = `build ${APP_VERSION}`;
     setupDnD();
     setupEvents();
     updateImagePickerVisibility();
