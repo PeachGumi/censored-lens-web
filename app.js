@@ -48,9 +48,15 @@
   const status = document.getElementById("status");
   const canvas = document.getElementById("resultCanvas");
   const ctx = canvas.getContext("2d");
-  const isTouchDevice =
-    typeof window !== "undefined" &&
-    ("ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);
+  const mobileUaPattern = /Android|iPhone|iPad|iPod|Mobile|IEMobile|BlackBerry|Opera Mini/i;
+  const isMobileUserAgent =
+    typeof navigator !== "undefined" && mobileUaPattern.test(navigator.userAgent || "");
+  const smallestScreenEdge =
+    typeof screen !== "undefined"
+      ? Math.min(screen.width || Number.MAX_SAFE_INTEGER, screen.height || Number.MAX_SAFE_INTEGER)
+      : Number.MAX_SAFE_INTEGER;
+  const isSmallScreenDevice = smallestScreenEdge <= 900;
+  const useMobileProfile = isMobileUserAgent || isSmallScreenDevice;
 
   let modelReady = false;
   let sourceImage = null;
@@ -247,7 +253,7 @@
     if (!window.faceapi?.tf) return;
     const tf = window.faceapi.tf;
     if (typeof tf.ready === "function") await tf.ready();
-    if (isTouchDevice && typeof tf.setBackend === "function") {
+    if (useMobileProfile && typeof tf.setBackend === "function") {
       try {
         await tf.setBackend("cpu");
         if (typeof tf.ready === "function") await tf.ready();
@@ -260,7 +266,7 @@
   }
 
   async function tryLoadDetectionNets() {
-    if (isTouchDevice) {
+    if (useMobileProfile) {
       await loadNetFromAnySource((baseUrl) =>
         window.faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl)
       );
@@ -268,31 +274,14 @@
       logDebug("detector profile: tiny-mobile");
       return;
     }
-    try {
-      await loadNetFromAnySource((baseUrl) =>
-        window.faceapi.nets.ssdMobilenetv1.loadFromUri(baseUrl)
-      );
-      await loadNetFromAnySource((baseUrl) =>
-        window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
-      );
-      detectorProfile = "ssd";
-      logDebug("detector profile: ssd");
-      return;
-    } catch (ssdErr) {
-      try {
-        await loadNetFromAnySource((baseUrl) =>
-          window.faceapi.nets.tinyFaceDetector.loadFromUri(baseUrl)
-        );
-        await loadNetFromAnySource((baseUrl) =>
-          window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
-        );
-        detectorProfile = "tiny";
-        logDebug("detector profile: tiny");
-        return;
-      } catch (tinyErr) {
-        throw tinyErr || ssdErr || new Error("Model load failed.");
-      }
-    }
+    await loadNetFromAnySource((baseUrl) =>
+      window.faceapi.nets.ssdMobilenetv1.loadFromUri(baseUrl)
+    );
+    await loadNetFromAnySource((baseUrl) =>
+      window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(baseUrl)
+    );
+    detectorProfile = "ssd";
+    logDebug("detector profile: ssd");
   }
 
   async function loadModels() {
@@ -310,7 +299,7 @@
             // env keys may differ by runtime
           }
         }
-        const backendOrder = isTouchDevice ? ["wasm", "webgl", "cpu"] : ["webgl", "wasm", "cpu"];
+        const backendOrder = useMobileProfile ? ["wasm", "webgl", "cpu"] : ["webgl", "wasm", "cpu"];
         let backendReady = false;
         if (typeof tf.setBackend === "function") {
           for (const backend of backendOrder) {
@@ -327,7 +316,7 @@
         if (!backendReady && typeof tf.ready === "function") await tf.ready();
         const current = typeof tf.getBackend === "function" ? tf.getBackend() : "unknown";
         logDebug(`tf backend current: ${current}`);
-        if (!isTouchDevice && current === "wasm") {
+        if (!useMobileProfile && current === "wasm") {
           try {
             await tf.setBackend("cpu");
             if (typeof tf.ready === "function") await tf.ready();
@@ -794,7 +783,7 @@
   }
 
   async function runDetectionWithLandmarks(detectCanvas, detectSize) {
-    if (isTouchDevice) {
+    if (detectorProfile === "tiny-mobile") {
       return window.faceapi.detectAllFaces(
         detectCanvas,
         new window.faceapi.TinyFaceDetectorOptions({
@@ -815,22 +804,14 @@
         .withFaceLandmarks(true);
     }
 
-    return window.faceapi
-      .detectAllFaces(
-        detectCanvas,
-        new window.faceapi.TinyFaceDetectorOptions({
-          inputSize: detectSize.width >= 880 || detectSize.height >= 880 ? 608 : 512,
-          scoreThreshold: TINY_SCORE_THRESHOLD
-        })
-      )
-      .withFaceLandmarks(true);
+    throw new Error("Desktop detector profile is not initialized.");
   }
 
   async function detectFaces() {
     const detectSize = fitSize(
       baseCanvas.width,
       baseCanvas.height,
-      isTouchDevice ? MOBILE_DETECT_MAX_EDGE : DETECT_MAX_EDGE
+      useMobileProfile ? MOBILE_DETECT_MAX_EDGE : DETECT_MAX_EDGE
     );
     const detectCanvas = document.createElement("canvas");
     detectCanvas.width = detectSize.width;
@@ -1276,7 +1257,15 @@
       );
     } catch (err) {
       console.error(err);
-      setStatus(`モデル読み込みに失敗しました: ${err?.message || "通信環境を確認してください。"}`);
+      setStatus(
+        `モデル読み込みに失敗しました: ${
+          err?.message || "通信環境を確認してください。"
+        }${
+          !useMobileProfile
+            ? "（PCは高精度モデル必須です。models 配下に SSD モデルを配置するか、ネットワーク接続を確認してください）"
+            : ""
+        }`
+      );
     } finally {
       setBusy(false);
       refreshButtons();

@@ -44,3 +44,12 @@
 
 CDNがブロックされる環境では、`models/` にモデルを同梱すると安定します。  
 アプリは `./models` を最優先で読み込み、失敗時にCDNへフォールバックします。
+
+### このリポジトリの同梱モデル
+
+- `tiny_face_detector_model-*`（軽量）
+- `face_landmark_68_tiny_model-*`（ランドマーク）
+- `ssd_mobilenetv1_model-*`（PC向け高精度）
+
+PCでは高精度モード（SSD）を優先利用する実装です。  
+GitHub Pages で公開後、画面の初期ステータスが `準備完了（高精度モード）` と表示されることを確認してください。
