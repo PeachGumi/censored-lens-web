@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-03";
+  const APP_VERSION = "2026.04.15-04";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -449,12 +449,20 @@
     const maxTextW = Math.max(8, effect.width - innerPad * 2);
     const maxTextH = Math.max(8, effect.height - innerPad * 2);
     const byHeight = maxTextH * 0.9;
-    const byWidth = maxTextW / Math.max(1, EYE_LABEL_TEXT.length * 0.62);
-    const fontSize = Math.max(8, Math.min(byHeight, byWidth));
+    let fontSize = Math.max(8, byHeight);
 
     targetCtx.beginPath();
     targetCtx.rect(-effect.width / 2 + innerPad, -effect.height / 2 + innerPad, maxTextW, maxTextH);
     targetCtx.clip();
+
+    // Fit text to the clipped band width so glyphs never exceed the black background.
+    for (let i = 0; i < 20; i += 1) {
+      targetCtx.font = `700 ${fontSize}px sans-serif`;
+      if (targetCtx.measureText(EYE_LABEL_TEXT).width <= maxTextW) break;
+      fontSize = Math.max(8, fontSize - 1);
+      if (fontSize <= 8) break;
+    }
+
     targetCtx.font = `700 ${fontSize}px sans-serif`;
     targetCtx.textAlign = "center";
     targetCtx.textBaseline = "middle";
