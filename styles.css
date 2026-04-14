@@ -20,6 +20,20 @@ body {
   font-size: 28px;
 }
 
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.headerMeta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .dropzone {
   border: 2px dashed #6e7e96;
   border-radius: 12px;
@@ -204,10 +218,16 @@ button:disabled {
 }
 
 .buildInfo {
-  margin: 0 0 8px;
-  text-align: right;
+  margin: 0;
   font-size: 11px;
   color: #7f8aa0;
+  letter-spacing: 0.02em;
+}
+
+.modeInfo {
+  margin: 0;
+  font-size: 11px;
+  color: #6f7b91;
   letter-spacing: 0.02em;
 }
 
@@ -258,6 +278,10 @@ button:disabled {
   .header h1 {
     font-size: 24px;
     margin-bottom: 6px;
+  }
+
+  .header {
+    align-items: center;
   }
 
   .dropzone {

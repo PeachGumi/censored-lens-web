@@ -4,12 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.15-02" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.15-03" />
   </head>
   <body>
     <main class="app">
       <header class="header">
         <h1>Image Censor Studio</h1>
+        <div class="headerMeta" aria-live="polite">
+          <span id="modeInfo" class="modeInfo"></span>
+          <span id="buildInfo" class="buildInfo"></span>
+        </div>
       </header>
 
       <section id="dropzone" class="dropzone compactDropzone" aria-label="画像のドロップ領域">
@@ -49,12 +53,11 @@
       <p class="editorHelp">
         枠をドラッグで移動、四隅ハンドルでサイズ変更、上の丸で回転。スマホはタップで選択・長押し気味で操作すると安定します。
       </p>
-      <p id="buildInfo" class="buildInfo" aria-live="polite"></p>
       <section class="saveBar" aria-label="保存操作">
         <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
       </section>
     </main>
 
-    <script src="./app.js?v=2026.04.15-02"></script>
+    <script src="./app.js?v=2026.04.15-03"></script>
   </body>
 </html>

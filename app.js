@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-02";
+  const APP_VERSION = "2026.04.15-03";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -41,6 +41,7 @@
   const processButton = document.getElementById("processButton");
   const downloadButton = document.getElementById("downloadButton");
   const buildInfo = document.getElementById("buildInfo");
+  const modeInfo = document.getElementById("modeInfo");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const blockedToggle = document.getElementById("blockedToggle");
   const addMosaicButton = document.getElementById("addMosaicButton");
@@ -1247,6 +1248,7 @@
   async function start() {
     logDebug(`app start: version ${APP_VERSION}`);
     if (buildInfo) buildInfo.textContent = `build ${APP_VERSION}`;
+    if (modeInfo) modeInfo.textContent = "mode: loading";
     setupDnD();
     setupEvents();
     updateImagePickerVisibility();
@@ -1259,6 +1261,9 @@
           ? "準備完了（高精度モード）。画像をドロップしてください。"
           : "準備完了（軽量モード）。画像をドロップしてください。"
       );
+      if (modeInfo) {
+        modeInfo.textContent = detectorProfile === "ssd" ? "mode: high-accuracy" : "mode: lite";
+      }
     } catch (err) {
       console.error(err);
       setStatus(
@@ -1270,6 +1275,7 @@
             : ""
         }`
       );
+      if (modeInfo) modeInfo.textContent = "mode: model-error";
     } finally {
       setBusy(false);
       refreshButtons();
