@@ -222,6 +222,13 @@
       : "操作を開く";
   }
 
+  function collapseControlsPanelOnMobile() {
+    if (!isTouchDevice || !mobileControlsPanel) return;
+    if (!mobileControlsPanel.hasAttribute("open")) return;
+    mobileControlsPanel.removeAttribute("open");
+    updateControlsSummaryLabel();
+  }
+
   function showProcessingMask() {
     if (!processingMask) return;
     processingMask.classList.remove("is-hidden");
@@ -368,6 +375,7 @@
       effect.materialId = material.id;
       effects.push(effect);
       selectEffect(effect.id);
+      collapseControlsPanelOnMobile();
     } catch (err) {
       logDebug(`material add failed: ${err?.message || err}`);
       setStatus("素材の読み込みに失敗しました。");
@@ -1141,6 +1149,9 @@
       }
       effects = next;
       selectEffect(effects.length ? effects[0].id : null);
+      if (faces.length) {
+        collapseControlsPanelOnMobile();
+      }
       setStatus(
         faces.length
           ? `${faces.length}件の顔を検出しました。位置・サイズ・回転を編集できます。`
@@ -1172,6 +1183,7 @@
     );
     const effect = makeEffect(type, rect, 0);
     effects.push(effect);
+    collapseControlsPanelOnMobile();
     if (type === "blocked") {
       selectEffect(null);
       renderCanvas();
