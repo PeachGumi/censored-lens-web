@@ -345,6 +345,50 @@ button:disabled {
   display: none !important;
 }
 
+.processingMask {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(9, 12, 18, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.processingMaskInner {
+  min-width: min(360px, 90vw);
+  background: #171d29;
+  border: 1px solid #2f3c56;
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #e9edf1;
+  text-align: center;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+}
+
+.processingMaskInner p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.processingSpinner {
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.22);
+  border-top-color: #4aa3ff;
+  animation: processing-spin 0.8s linear infinite;
+}
+
+@keyframes processing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .canvas {
   display: block;
   width: auto;

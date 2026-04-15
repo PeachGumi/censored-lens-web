@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.15-14" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.15-15" />
   </head>
   <body>
     <main class="app">
@@ -72,8 +72,15 @@
           </section>
         </div>
       </details>
+
+      <div id="processingMask" class="processingMask is-hidden" aria-live="polite" aria-busy="true">
+        <div class="processingMaskInner">
+          <div class="processingSpinner" aria-hidden="true"></div>
+          <p>処理中です。しばらくお待ちください…</p>
+        </div>
+      </div>
     </main>
 
-    <script src="./app.js?v=2026.04.15-14"></script>
+    <script src="./app.js?v=2026.04.15-15"></script>
   </body>
 </html>

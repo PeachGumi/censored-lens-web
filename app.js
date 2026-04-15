@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-14";
+  const APP_VERSION = "2026.04.15-15";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -46,6 +46,7 @@
   const materialsList = document.getElementById("materialsList");
   const mobileControlsPanel = document.getElementById("mobileControlsPanel");
   const controlsSummary = document.getElementById("controlsSummary");
+  const processingMask = document.getElementById("processingMask");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const previewArea = document.getElementById("previewArea");
   const blockedTextEditor = document.getElementById("blockedTextEditor");
@@ -219,6 +220,16 @@
     controlsSummary.textContent = mobileControlsPanel.hasAttribute("open")
       ? "操作を閉じる"
       : "操作を開く";
+  }
+
+  function showProcessingMask() {
+    if (!processingMask) return;
+    processingMask.classList.remove("is-hidden");
+  }
+
+  function hideProcessingMask() {
+    if (!processingMask) return;
+    processingMask.classList.add("is-hidden");
   }
 
   function selectEffect(id) {
@@ -1116,13 +1127,7 @@
   async function processCurrentImage() {
     if (!sourceImage || !modelReady || !baseCanvas) return;
 
-    // On mobile, collapse controls first so users are not blocked by the heavy detection phase.
-    if (isTouchDevice && mobileControlsPanel?.hasAttribute("open")) {
-      mobileControlsPanel.removeAttribute("open");
-      updateControlsSummaryLabel();
-      await waitForUiPaint();
-    }
-
+    showProcessingMask();
     setBusy(true);
     setStatus(isTouchDevice ? "顔を検出中...（軽量モード）" : "顔を検出中...");
     await waitForUiPaint();
@@ -1146,6 +1151,7 @@
       setStatus("処理に失敗しました。別の画像で試してください。");
     } finally {
       setBusy(false);
+      hideProcessingMask();
     }
   }
 
