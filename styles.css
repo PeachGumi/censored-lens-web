@@ -446,11 +446,11 @@ button:disabled {
   }
 
   .canvas {
-    width: min(92vw, 100%);
-    height: auto;
+    width: 100%;
+    height: 100%;
     border-radius: 8px;
     object-fit: contain;
-    max-height: 48svh;
+    max-height: none;
   }
 
   .controlsPanel {
