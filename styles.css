@@ -359,8 +359,9 @@ button:disabled {
   .app {
     width: 100vw;
     margin: 0;
-    padding: 8px 0 8px;
+    padding: 8px 0 64px;
     min-height: 100svh;
+    height: 100svh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -454,9 +455,15 @@ button:disabled {
   }
 
   .controlsPanel {
-    margin-top: 6px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    margin-top: 0;
     border-top: 1px solid #283042;
     background: #0f1116;
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.35);
   }
 
   .controlsSummary {
@@ -500,7 +507,7 @@ button:disabled {
 
   .controlsPanelBody {
     padding: 0 8px 8px;
-    max-height: 38svh;
+    max-height: 42svh;
     overflow: auto;
   }
 }
