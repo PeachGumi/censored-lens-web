@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-18";
+  const APP_VERSION = "2026.04.15-19";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -85,6 +85,9 @@
   let debugLogLines = [];
   let lastTouchX = null;
   let lastTouchY = null;
+  let lastTapAt = 0;
+  let lastTapX = null;
+  let lastTapY = null;
 
   function normalizeLabelText(value) {
     const normalized = String(value || "").replace(/\s+/g, " ").trim();
@@ -655,7 +658,6 @@
 
   function drawMosaicEffect(effect, pixelSize) {
     const corners = getRotatedCorners(effect);
-    const handlePoints = getResizeHandlePoints(effect);
     const mosaicLayer = getMosaicLayer(pixelSize);
     ctx.save();
     ctx.beginPath();
@@ -734,6 +736,7 @@
     if (!effect || !isEffectVisible(effect)) return;
 
     const corners = getRotatedCorners(effect);
+    const handlePoints = getResizeHandlePoints(effect);
     const visualHandleSize = isTouchDevice ? HANDLE_SIZE * 1.35 : HANDLE_SIZE;
     const rotateHandle = getRotateHandlePoint(effect);
     const topCenter = fromLocalPoint(
@@ -1677,11 +1680,37 @@
     );
     document.addEventListener(
       "touchend",
-      () => {
+      (event) => {
+        if (isTouchDevice) {
+          const now = Date.now();
+          const changedTouch = event.changedTouches?.[0];
+          const x = changedTouch?.clientX ?? null;
+          const y = changedTouch?.clientY ?? null;
+          const nearPreviousTap =
+            typeof x === "number" &&
+            typeof y === "number" &&
+            typeof lastTapX === "number" &&
+            typeof lastTapY === "number" &&
+            Math.hypot(x - lastTapX, y - lastTapY) < 24;
+          const isDoubleTap = now - lastTapAt < 320 && nearPreviousTap;
+
+          if (isDoubleTap) {
+            const target = event.target instanceof Element ? event.target : null;
+            const isFormControl = Boolean(target?.closest('input, textarea, select, button, label'));
+            if (!isFormControl) {
+              event.preventDefault();
+            }
+          }
+
+          lastTapAt = now;
+          lastTapX = x;
+          lastTapY = y;
+        }
+
         lastTouchX = null;
         lastTouchY = null;
       },
-      { passive: true }
+      { passive: false }
     );
     document.addEventListener(
       "touchcancel",
