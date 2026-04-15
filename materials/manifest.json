@@ -111,6 +111,13 @@
       "file": "2764.svg",
       "type": "image/svg+xml",
       "defaultWidth": 180
+    },
+    {
+      "id": "material-erokoraseiekisozai025",
+      "name": "erokoraseiekisozai025",
+      "file": "erokoraseiekisozai025.png",
+      "type": "image/png",
+      "defaultWidth": 180
     }
   ]
 }
