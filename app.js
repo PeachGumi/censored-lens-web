@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.16-04";
+  const APP_VERSION = "2026.04.16-06";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -1737,11 +1737,14 @@
       }
 
       const iOSPattern = /iPhone|iPad|iPod/i;
+      const androidPattern = /Android/i;
       const isIOS = iOSPattern.test(navigator.userAgent || "");
+      const isAndroid = androidPattern.test(navigator.userAgent || "");
       const shareFile = new File([blob], fileName, { type: "image/png" });
       const hasShareApi = typeof navigator.share === "function";
 
-      if (hasShareApi) {
+      // Android is download-only to avoid dual flow (share sheet + download).
+      if (hasShareApi && !isAndroid) {
         try {
           const canShareFiles =
             typeof navigator.canShare !== "function" || navigator.canShare({ files: [shareFile] });
