@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-12";
+  const APP_VERSION = "2026.04.15-13";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -44,6 +44,7 @@
   const buildInfo = document.getElementById("buildInfo");
   const modeInfo = document.getElementById("modeInfo");
   const materialsList = document.getElementById("materialsList");
+  const mobileControlsPanel = document.getElementById("mobileControlsPanel");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const previewArea = document.getElementById("previewArea");
   const blockedTextEditor = document.getElementById("blockedTextEditor");
@@ -1523,6 +1524,13 @@
     logDebug(`app start: version ${APP_VERSION}`);
     if (buildInfo) buildInfo.textContent = `build ${APP_VERSION}`;
     if (modeInfo) modeInfo.textContent = "mode: loading";
+    if (mobileControlsPanel) {
+      if (isTouchDevice) {
+        mobileControlsPanel.removeAttribute("open");
+      } else {
+        mobileControlsPanel.setAttribute("open", "");
+      }
+    }
     if (blockedTextEditorInput) blockedTextEditorInput.value = EYE_LABEL_TEXT;
     setupDnD();
     setupEvents();

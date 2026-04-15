@@ -114,6 +114,18 @@ button:disabled {
   gap: 10px;
 }
 
+.controlsPanel {
+  margin-top: 8px;
+}
+
+.controlsSummary {
+  display: none;
+}
+
+.controlsPanelBody {
+  display: block;
+}
+
 .compactControls {
   margin: 8px 0;
   gap: 8px;
@@ -346,8 +358,12 @@ button:disabled {
 @media (max-width: 768px) {
   .app {
     width: 100vw;
-    margin: 12px auto 20px;
-    padding: 0 0 8px;
+    margin: 0;
+    padding: 8px 0 8px;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .header h1 {
@@ -372,6 +388,7 @@ button:disabled {
 
   .controls {
     gap: 8px;
+    margin: 8px 0 0;
   }
 
   .control {
@@ -420,11 +437,12 @@ button:disabled {
     width: 100%;
     margin-left: 0;
     margin-right: 0;
-    min-height: 220px;
+    min-height: 0;
     height: auto;
     padding: 6px;
     overflow: hidden;
     display: flex;
+    flex: 1 1 auto;
   }
 
   .canvas {
@@ -432,6 +450,36 @@ button:disabled {
     height: auto;
     border-radius: 8px;
     object-fit: contain;
-    max-height: 52svh;
+    max-height: 48svh;
+  }
+
+  .controlsPanel {
+    margin-top: 6px;
+    border-top: 1px solid #283042;
+    background: #0f1116;
+  }
+
+  .controlsSummary {
+    display: block;
+    list-style: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #c6d0dd;
+    padding: 10px 12px;
+    user-select: none;
+  }
+
+  .controlsSummary::-webkit-details-marker {
+    display: none;
+  }
+
+  .controlsPanel[open] .controlsSummary {
+    border-bottom: 1px solid #283042;
+  }
+
+  .controlsPanelBody {
+    padding: 0 8px 8px;
+    max-height: 38svh;
+    overflow: auto;
   }
 }

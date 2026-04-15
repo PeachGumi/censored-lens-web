@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.15-12" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.15-13" />
   </head>
   <body>
     <main class="app">
@@ -39,36 +39,41 @@
         <label id="changeImageButton" class="pickButton smallPickButton" for="fileInput">別の画像を選択</label>
       </section>
 
-      <section class="controls compactControls">
-        <div class="controlStack">
-          <label class="control control-slider">
-            <span>モザイク強度</span>
-            <input id="mosaicScale" type="range" min="6" max="40" value="14" />
-          </label>
+      <details id="mobileControlsPanel" class="controlsPanel" open>
+        <summary class="controlsSummary">操作を開く</summary>
+        <div class="controlsPanelBody">
+          <section class="controls compactControls">
+            <div class="controlStack">
+              <label class="control control-slider">
+                <span>モザイク強度</span>
+                <input id="mosaicScale" type="range" min="6" max="40" value="14" />
+              </label>
+            </div>
+
+            <div class="actionGrid">
+              <button id="processButton" type="button" disabled>顔を検出してモザイク</button>
+              <button id="addMosaicButton" type="button" disabled>モザイク追加</button>
+              <button id="addBlockedButton" type="button" disabled>目線追加</button>
+              <button id="deleteEffectButton" type="button" disabled>選択を削除</button>
+            </div>
+
+            <section class="materialPanel" aria-label="素材パネル">
+              <div class="materialPanelTitle">素材</div>
+              <div id="materialsList" class="materialsList"></div>
+            </section>
+          </section>
+
+          <p id="status" class="status compactStatus">モデルを読み込み中...</p>
+          <p class="editorHelp">
+            枠をドラッグで移動、四隅ハンドルでサイズ変更、上の丸で回転。スマホはタップで選択・長押し気味で操作すると安定します。
+          </p>
+          <section class="saveBar" aria-label="保存操作">
+            <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
+          </section>
         </div>
-
-        <div class="actionGrid">
-          <button id="processButton" type="button" disabled>顔を検出してモザイク</button>
-          <button id="addMosaicButton" type="button" disabled>モザイク追加</button>
-          <button id="addBlockedButton" type="button" disabled>目線追加</button>
-          <button id="deleteEffectButton" type="button" disabled>選択を削除</button>
-        </div>
-
-        <section class="materialPanel" aria-label="素材パネル">
-          <div class="materialPanelTitle">素材</div>
-          <div id="materialsList" class="materialsList"></div>
-        </section>
-      </section>
-
-      <p id="status" class="status compactStatus">モデルを読み込み中...</p>
-      <p class="editorHelp">
-        枠をドラッグで移動、四隅ハンドルでサイズ変更、上の丸で回転。スマホはタップで選択・長押し気味で操作すると安定します。
-      </p>
-      <section class="saveBar" aria-label="保存操作">
-        <button id="downloadButton" type="button" class="saveButton" disabled>画像を保存</button>
-      </section>
+      </details>
     </main>
 
-    <script src="./app.js?v=2026.04.15-12"></script>
+    <script src="./app.js?v=2026.04.15-13"></script>
   </body>
 </html>
