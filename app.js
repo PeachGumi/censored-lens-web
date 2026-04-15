@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-15";
+  const APP_VERSION = "2026.04.15-16";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -83,6 +83,7 @@
   const materialImages = new Map();
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
+  let lastTouchY = null;
 
   function normalizeLabelText(value) {
     const normalized = String(value || "").replace(/\s+/g, " ").trim();
@@ -108,6 +109,29 @@
   function setStatus(text) {
     status.textContent = text;
     logDebug(`status: ${text}`);
+  }
+
+  function findTouchScrollableParent(node) {
+    let current = node instanceof Element ? node : null;
+    while (current && current !== document.body) {
+      if (
+        current.classList?.contains("controlsPanelBody") ||
+        current.classList?.contains("materialsList")
+      ) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
+  function canScrollInDirection(scroller, deltaY) {
+    if (!scroller) return false;
+    const { scrollTop, scrollHeight, clientHeight } = scroller;
+    if (scrollHeight <= clientHeight + 1) return false;
+    if (deltaY < 0) return scrollTop > 0;
+    if (deltaY > 0) return scrollTop + clientHeight < scrollHeight - 1;
+    return true;
   }
 
   function waitForUiPaint() {
@@ -1557,6 +1581,82 @@
         updateControlsSummaryLabel();
       });
     }
+
+    // Disable browser zoom gestures so editing stays fixed on mobile.
+    document.addEventListener(
+      "gesturestart",
+      (event) => {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+    document.addEventListener(
+      "gesturechange",
+      (event) => {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+    document.addEventListener(
+      "gestureend",
+      (event) => {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+    document.addEventListener(
+      "touchstart",
+      (event) => {
+        if (!isTouchDevice) return;
+        lastTouchY = event.touches?.[0]?.clientY ?? null;
+      },
+      { passive: true }
+    );
+    document.addEventListener(
+      "touchmove",
+      (event) => {
+        if (!isTouchDevice) return;
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+          return;
+        }
+
+        const currentY = event.touches?.[0]?.clientY;
+        const deltaY =
+          typeof currentY === "number" && typeof lastTouchY === "number" ? lastTouchY - currentY : 0;
+        lastTouchY = typeof currentY === "number" ? currentY : lastTouchY;
+
+        const scroller = findTouchScrollableParent(event.target);
+        if (canScrollInDirection(scroller, deltaY)) {
+          return;
+        }
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+    document.addEventListener(
+      "touchend",
+      () => {
+        lastTouchY = null;
+      },
+      { passive: true }
+    );
+    document.addEventListener(
+      "touchcancel",
+      () => {
+        lastTouchY = null;
+      },
+      { passive: true }
+    );
+    window.addEventListener(
+      "wheel",
+      (event) => {
+        if (event.ctrlKey) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
   }
 
   async function start() {

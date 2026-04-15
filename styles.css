@@ -10,6 +10,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
 .app {
   width: min(980px, 94vw);
   margin: 18px auto 36px;
@@ -182,6 +187,7 @@ button:disabled {
   gap: 6px;
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
   padding-bottom: 2px;
   -webkit-overflow-scrolling: touch;
 }
@@ -398,7 +404,7 @@ button:disabled {
   border-radius: 8px;
   background: transparent;
   cursor: default;
-  touch-action: pan-y;
+  touch-action: none;
   object-fit: contain;
   user-select: none;
   -webkit-user-select: none;
@@ -410,6 +416,8 @@ button:disabled {
   body {
     height: 100svh;
     overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   .app {
@@ -565,6 +573,7 @@ button:disabled {
     padding: 0 8px 8px;
     max-height: 38svh;
     overflow: auto;
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
