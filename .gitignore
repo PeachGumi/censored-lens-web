@@ -1,0 +1,6 @@
+# macOS metadata
+.DS_Store
+
+# Deploy artifacts (generated)
+deploy/cloudflare-pages/
+deploy/*.zip

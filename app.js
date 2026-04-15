@@ -9,6 +9,7 @@
     "https://unpkg.com/@vladmandic/face-api/model/",
     "https://justadudewhohacks.github.io/face-api.js/models"
   ];
+  const MATERIALS_MANIFEST_URL = "./materials/manifest.json";
 
   const MAX_RENDER_EDGE = 1600;
   const MOBILE_RENDER_EDGE = 1024;
@@ -32,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-08";
+  const APP_VERSION = "2026.04.15-09";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -42,6 +43,7 @@
   const downloadButton = document.getElementById("downloadButton");
   const buildInfo = document.getElementById("buildInfo");
   const modeInfo = document.getElementById("modeInfo");
+  const materialsList = document.getElementById("materialsList");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const previewArea = document.getElementById("previewArea");
   const blockedTextEditor = document.getElementById("blockedTextEditor");
@@ -74,6 +76,8 @@
   let busy = false;
   let detectorProfile = "tiny";
   let blockedEditorTargetId = null;
+  let materials = [];
+  const materialImages = new Map();
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
 
@@ -245,6 +249,101 @@
   function clearMosaicLayerCache() {
     mosaicLayerCache.pixelSize = null;
     mosaicLayerCache.canvas = null;
+  }
+
+  function getMaterialById(id) {
+    return materials.find((item) => item.id === id) || null;
+  }
+
+  async function loadMaterialImage(material) {
+    if (materialImages.has(material.id)) return materialImages.get(material.id);
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error(`Material image load failed: ${material.url}`));
+      img.src = material.url;
+    });
+    materialImages.set(material.id, image);
+    return image;
+  }
+
+  async function loadMaterials() {
+    if (!materialsList) return;
+    try {
+      const response = await fetch(MATERIALS_MANIFEST_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`manifest load failed: ${response.status}`);
+      const data = await response.json();
+      const list = Array.isArray(data?.materials) ? data.materials : [];
+      materials = list
+        .filter((item) => item && item.id && item.file)
+        .map((item) => ({
+          id: String(item.id),
+          name: String(item.name || item.id),
+          file: String(item.file),
+          url: `./materials/${String(item.file)}`,
+          defaultWidth: Number(item.defaultWidth) || 180
+        }));
+    } catch (err) {
+      logDebug(`materials load failed: ${err?.message || err}`);
+      materials = [];
+    }
+    renderMaterialsPanel();
+  }
+
+  function renderMaterialsPanel() {
+    if (!materialsList) return;
+    materialsList.innerHTML = "";
+    if (!materials.length) {
+      const empty = document.createElement("span");
+      empty.textContent = "素材なし";
+      empty.className = "modeInfo";
+      materialsList.appendChild(empty);
+      return;
+    }
+
+    for (const material of materials) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "materialButton";
+      button.textContent = material.name;
+      button.addEventListener("click", async () => {
+        await addMaterialEffect(material.id);
+      });
+      materialsList.appendChild(button);
+    }
+  }
+
+  async function addMaterialEffect(materialId) {
+    if (!baseCanvas) {
+      setStatus("先に画像を読み込んでください。");
+      return;
+    }
+    const material = getMaterialById(materialId);
+    if (!material) return;
+    try {
+      const image = await loadMaterialImage(material);
+      const maxW = Math.max(40, baseCanvas.width * 0.42);
+      const width = Math.max(30, Math.min(maxW, material.defaultWidth));
+      const ratio = image.naturalHeight / Math.max(1, image.naturalWidth);
+      const height = Math.max(20, width * ratio);
+      const rect = clampRect(
+        {
+          x: (baseCanvas.width - width) / 2,
+          y: (baseCanvas.height - height) / 2,
+          width,
+          height
+        },
+        baseCanvas.width,
+        baseCanvas.height
+      );
+      const effect = makeEffect("material", rect, 0);
+      effect.materialId = material.id;
+      effects.push(effect);
+      selectEffect(effect.id);
+    } catch (err) {
+      logDebug(`material add failed: ${err?.message || err}`);
+      setStatus("素材の読み込みに失敗しました。");
+    }
   }
 
   function loadScript(src) {
@@ -479,6 +578,20 @@
     drawBlockedOnContext(ctx, effect);
   }
 
+  function drawMaterialOnContext(targetCtx, effect) {
+    const material = getMaterialById(effect.materialId);
+    if (!material) return;
+    const image = materialImages.get(material.id);
+    if (!image) return;
+    const center = getEffectCenter(effect);
+    const rad = degToRad(effect.rotation || 0);
+    targetCtx.save();
+    targetCtx.translate(center.x, center.y);
+    targetCtx.rotate(rad);
+    targetCtx.drawImage(image, -effect.width / 2, -effect.height / 2, effect.width, effect.height);
+    targetCtx.restore();
+  }
+
   function drawBlockedOnContext(targetCtx, effect) {
     const center = getEffectCenter(effect);
     const rad = degToRad(effect.rotation || 0);
@@ -596,6 +709,7 @@
       if (!isEffectVisible(effect)) continue;
       if (effect.type === "mosaic") drawMosaicEffect(effect, pixelSize);
       if (effect.type === "blocked") drawBlockedRect(effect);
+      if (effect.type === "material") drawMaterialOnContext(ctx, effect);
     }
 
     drawSelection();
@@ -625,7 +739,11 @@
         targetCtx.clip();
         targetCtx.drawImage(mosaicLayer, 0, 0);
         targetCtx.restore();
-      } else if (effect.type === "blocked") drawBlockedOnContext(targetCtx, effect);
+      } else if (effect.type === "blocked") {
+        drawBlockedOnContext(targetCtx, effect);
+      } else if (effect.type === "material") {
+        drawMaterialOnContext(targetCtx, effect);
+      }
     }
   }
 
@@ -1336,6 +1454,7 @@
     if (blockedTextEditorInput) blockedTextEditorInput.value = EYE_LABEL_TEXT;
     setupDnD();
     setupEvents();
+    await loadMaterials();
     updateImagePickerVisibility();
     setBusy(true);
     try {

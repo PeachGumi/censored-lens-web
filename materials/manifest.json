@@ -1,0 +1,11 @@
+{
+  "materials": [
+    {
+      "id": "tongue-1f445",
+      "name": "1f445",
+      "file": "1f445.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    }
+  ]
+}

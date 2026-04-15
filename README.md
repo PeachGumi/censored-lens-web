@@ -18,6 +18,20 @@
 6. `選択を削除` または Deleteキーで削除
 7. 「画像を保存」でダウンロード
 
+## 素材フォルダ運用（提案A）
+
+- 素材フォルダ: `materials/`
+- マニフェスト: `materials/manifest.json`
+
+アプリは `materials/manifest.json` を読み込んで、素材パネルに表示します。  
+現在は `materials/1f445.svg` を登録済みです。
+
+新しい素材を追加する場合:
+
+1. `materials/` にファイルを置く
+2. `materials/manifest.json` の `materials` 配列へ追記する
+3. ページを再読み込みする
+
 ## GitHub Pages で公開
 
 1. この `censored-lens-web` フォルダ内容を新規リポジトリへ push
