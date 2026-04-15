@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-23";
+  const APP_VERSION = "2026.04.16-01";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -89,6 +89,9 @@
   let lastTapAt = 0;
   let lastTapX = null;
   let lastTapY = null;
+  let blockedLongPressTimer = null;
+  let blockedLongPressTriggered = false;
+  const BLOCKED_EDITOR_LONG_PRESS_MS = 420;
 
   function normalizeLabelText(value) {
     const normalized = String(value || "").replace(/\s+/g, " ").trim();
@@ -114,6 +117,14 @@
   function setStatus(text) {
     status.textContent = text;
     logDebug(`status: ${text}`);
+  }
+
+  function clearBlockedLongPress() {
+    if (blockedLongPressTimer) {
+      clearTimeout(blockedLongPressTimer);
+      blockedLongPressTimer = null;
+    }
+    blockedLongPressTriggered = false;
   }
 
   function findTouchScrollableParent(node) {
@@ -1414,6 +1425,7 @@
   function onPointerDown(event) {
     if (gestureState) return;
     if (busy || !baseCanvas) return;
+    clearBlockedLongPress();
     const point = getCanvasPoint(event);
     const hit = hitTest(point);
     if (!hit) {
@@ -1425,6 +1437,20 @@
 
     const wasSelectedBeforeTap = selectedEffectId === hit.effect.id;
     selectEffect(hit.effect.id);
+
+    if (hit.effect.type !== "blocked" && blockedEditorTargetId != null) {
+      blockedEditorTargetId = null;
+      syncBlockedTextEditor();
+    }
+
+    if (hit.effect.type === "blocked" && wasSelectedBeforeTap) {
+      blockedLongPressTimer = setTimeout(() => {
+        blockedEditorTargetId = hit.effect.id;
+        blockedLongPressTriggered = true;
+        dragState = null;
+        syncBlockedTextEditor();
+      }, BLOCKED_EDITOR_LONG_PRESS_MS);
+    }
 
     // First tap/click on an unselected effect only selects it.
     // Drag/resize starts from the next interaction so touch scroll is not blocked.
@@ -1470,6 +1496,13 @@
     if (gestureState) return;
     if (!baseCanvas) return;
     const point = getCanvasPoint(event);
+
+    if (dragState) {
+      const movement = Math.hypot(point.x - dragState.startPoint.x, point.y - dragState.startPoint.y);
+      if (movement > 6) {
+        clearBlockedLongPress();
+      }
+    }
 
     if (!dragState) {
       if (!isTouchDevice) canvas.style.cursor = cursorForHit(hitTest(point));
@@ -1559,18 +1592,21 @@
 
   function onPointerUp(event) {
     if (gestureState) return;
-    if (!dragState) return;
-    const wasTap = !dragState.moved;
-    const tappedBlockedSelectedTwice =
-      wasTap &&
-      dragState.mode === "move" &&
-      dragState.type === "blocked" &&
-      dragState.wasSelected &&
-      selectedEffectId === dragState.id;
-
-    if (tappedBlockedSelectedTwice) {
-      blockedEditorTargetId = dragState.id;
+    if (blockedLongPressTriggered) {
+      clearBlockedLongPress();
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch {
+        // ignore
+      }
+      dragState = null;
+      canvas.style.cursor = "default";
+      refreshButtons();
+      return;
     }
+
+    clearBlockedLongPress();
+    if (!dragState) return;
 
     try {
       canvas.releasePointerCapture(event.pointerId);
