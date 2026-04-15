@@ -307,6 +307,9 @@ button:disabled {
   justify-content: center;
   overflow: hidden;
   padding: 10px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .blockedTextEditor {
@@ -353,6 +356,9 @@ button:disabled {
   cursor: default;
   touch-action: pan-y;
   object-fit: contain;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @media (max-width: 768px) {
@@ -514,7 +520,9 @@ button:disabled {
   .controlsPanelBody {
     padding: 0 8px 8px;
     max-height: 38svh;
-    overflow: hidden;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .imagePickerCompact {

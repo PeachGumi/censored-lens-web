@@ -1116,6 +1116,13 @@
   async function processCurrentImage() {
     if (!sourceImage || !modelReady || !baseCanvas) return;
 
+    // On mobile, collapse controls first so users are not blocked by the heavy detection phase.
+    if (isTouchDevice && mobileControlsPanel?.hasAttribute("open")) {
+      mobileControlsPanel.removeAttribute("open");
+      updateControlsSummaryLabel();
+      await waitForUiPaint();
+    }
+
     setBusy(true);
     setStatus(isTouchDevice ? "顔を検出中...（軽量モード）" : "顔を検出中...");
     await waitForUiPaint();
