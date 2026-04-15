@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-19";
+  const APP_VERSION = "2026.04.15-21";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -1326,9 +1326,9 @@
     const wasSelectedBeforeTap = selectedEffectId === hit.effect.id;
     selectEffect(hit.effect.id);
 
-    // First tap/click on an unselected effect only selects it.
-    // Drag/resize starts from the next interaction so touch scroll is not blocked.
-    if (!wasSelectedBeforeTap) {
+    // On touch devices, allow immediate resize/rotate even on first tap.
+    // Keep single-tap-select behavior only for move mode.
+    if (!wasSelectedBeforeTap && hit.mode === "move") {
       dragState = null;
       return;
     }
@@ -1696,7 +1696,7 @@
 
           if (isDoubleTap) {
             const target = event.target instanceof Element ? event.target : null;
-            const isFormControl = Boolean(target?.closest('input, textarea, select, button, label'));
+            const isFormControl = Boolean(target?.closest('input[type="text"], textarea, select'));
             if (!isFormControl) {
               event.preventDefault();
             }
@@ -1709,6 +1709,15 @@
 
         lastTouchX = null;
         lastTouchY = null;
+      },
+      { passive: false }
+    );
+    document.addEventListener(
+      "dblclick",
+      (event) => {
+        if (isTouchDevice) {
+          event.preventDefault();
+        }
       },
       { passive: false }
     );
