@@ -339,7 +339,7 @@ button:disabled {
   border-radius: 8px;
   background: transparent;
   cursor: default;
-  touch-action: none;
+  touch-action: pan-y;
   object-fit: contain;
 }
 
@@ -435,5 +435,6 @@ button:disabled {
     height: auto;
     border-radius: 0;
     object-fit: contain;
+    max-height: 72svh;
   }
 }

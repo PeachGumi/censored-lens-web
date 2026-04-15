@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-11";
+  const APP_VERSION = "2026.04.15-12";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -536,6 +536,10 @@
     if (type === "blocked") {
       effect.text = EYE_LABEL_TEXT;
     }
+    if (type === "material") {
+      effect.lockAspect = true;
+      effect.aspectRatio = rect.width / Math.max(1, rect.height);
+    }
     return effect;
   }
 
@@ -931,6 +935,38 @@
     return { x, y, width: w, height: h };
   }
 
+  function clampRectKeepingAspect(rect, maxW, maxH, ratio) {
+    let w = Math.max(MIN_EFFECT_SIZE, rect.width);
+    let h = Math.max(MIN_EFFECT_SIZE, rect.height);
+    let x = rect.x;
+    let y = rect.y;
+
+    // Keep aspect ratio while ensuring the effect fits in canvas bounds.
+    let scale = 1;
+    if (w > maxW) scale = Math.min(scale, maxW / Math.max(1, w));
+    if (h > maxH) scale = Math.min(scale, maxH / Math.max(1, h));
+    if (scale < 1) {
+      w *= scale;
+      h *= scale;
+    }
+
+    // Re-apply ratio after scaling to avoid floating point drift.
+    w = Math.max(MIN_EFFECT_SIZE, w);
+    h = Math.max(MIN_EFFECT_SIZE, w / Math.max(0.0001, ratio));
+    if (h > maxH) {
+      h = maxH;
+      w = h * ratio;
+    }
+    if (w > maxW) {
+      w = maxW;
+      h = w / Math.max(0.0001, ratio);
+    }
+
+    x = Math.min(Math.max(0, x), Math.max(0, maxW - w));
+    y = Math.min(Math.max(0, y), Math.max(0, maxH - h));
+    return { x, y, width: w, height: h };
+  }
+
   function makeBlockedRectFromFace(faceBox, width, height) {
     const bandW = Math.max(24, faceBox.width * 0.8);
     const bandH = Math.max(12, Math.min(40, faceBox.height * 0.22));
@@ -1270,8 +1306,20 @@
 
       let width = Math.abs(localCurrent.x);
       let height = Math.abs(localCurrent.y);
-      width = Math.max(MIN_EFFECT_SIZE, width);
-      height = Math.max(MIN_EFFECT_SIZE, height);
+
+      if (effect.type === "material") {
+        const ratio = effect.aspectRatio || dragState.origin.width / Math.max(1, dragState.origin.height);
+        if (width / Math.max(1, height) > ratio) {
+          height = Math.max(MIN_EFFECT_SIZE, height);
+          width = height * ratio;
+        } else {
+          width = Math.max(MIN_EFFECT_SIZE, width);
+          height = width / Math.max(0.0001, ratio);
+        }
+      } else {
+        width = Math.max(MIN_EFFECT_SIZE, width);
+        height = Math.max(MIN_EFFECT_SIZE, height);
+      }
 
       const signX = localCurrent.x >= 0 ? 1 : -1;
       const signY = localCurrent.y >= 0 ? 1 : -1;
@@ -1285,7 +1333,15 @@
         width,
         height
       };
-      const clamped = clampRect(candidate, baseCanvas.width, baseCanvas.height);
+      const clamped =
+        effect.type === "material"
+          ? clampRectKeepingAspect(
+              candidate,
+              baseCanvas.width,
+              baseCanvas.height,
+              effect.aspectRatio || dragState.origin.width / Math.max(1, dragState.origin.height)
+            )
+          : clampRect(candidate, baseCanvas.width, baseCanvas.height);
       effect.x = clamped.x;
       effect.y = clamped.y;
       effect.width = clamped.width;
