@@ -6,6 +6,111 @@
       "file": "1f445.svg",
       "type": "image/svg+xml",
       "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f48b",
+      "name": "1f48b",
+      "file": "1f48b.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f499",
+      "name": "1f499",
+      "file": "1f499.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f49a",
+      "name": "1f49a",
+      "file": "1f49a.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f49b",
+      "name": "1f49b",
+      "file": "1f49b.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f49c",
+      "name": "1f49c",
+      "file": "1f49c.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f4a2",
+      "name": "1f4a2",
+      "file": "1f4a2.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f4af",
+      "name": "1f4af",
+      "file": "1f4af.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f5a4",
+      "name": "1f5a4",
+      "file": "1f5a4.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f90d",
+      "name": "1f90d",
+      "file": "1f90d.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f90e",
+      "name": "1f90e",
+      "file": "1f90e.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1f9e1",
+      "name": "1f9e1",
+      "file": "1f9e1.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1fa75",
+      "name": "1fa75",
+      "file": "1fa75.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1fa76",
+      "name": "1fa76",
+      "file": "1fa76.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-1fa77",
+      "name": "1fa77",
+      "file": "1fa77.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
+    },
+    {
+      "id": "emoji-2764",
+      "name": "2764",
+      "file": "2764.svg",
+      "type": "image/svg+xml",
+      "defaultWidth": 180
     }
   ]
 }
