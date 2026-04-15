@@ -4,3 +4,4 @@
 # Deploy artifacts (generated)
 deploy/cloudflare-pages/
 deploy/*.zip
+deploy/history/
