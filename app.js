@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.16-03";
+  const APP_VERSION = "2026.04.16-04";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -1739,19 +1739,20 @@
       const iOSPattern = /iPhone|iPad|iPod/i;
       const isIOS = iOSPattern.test(navigator.userAgent || "");
       const shareFile = new File([blob], fileName, { type: "image/png" });
-      const canShareFile =
-        typeof navigator.share === "function" &&
-        typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [shareFile] });
+      const hasShareApi = typeof navigator.share === "function";
 
-      if (canShareFile) {
+      if (hasShareApi) {
         try {
-          await navigator.share({
-            files: [shareFile],
-            title: "Image Censor Studio",
-            text: "編集した画像"
-          });
-          return;
+          const canShareFiles =
+            typeof navigator.canShare !== "function" || navigator.canShare({ files: [shareFile] });
+          if (canShareFiles) {
+            await navigator.share({
+              files: [shareFile],
+              title: "Image Censor Studio",
+              text: "編集した画像"
+            });
+            return;
+          }
         } catch (err) {
           if (err?.name !== "AbortError") {
             logDebug(`share failed: ${err?.message || err}`);
@@ -1760,12 +1761,10 @@
       }
 
       if (isIOS) {
-        const dataUrl = exportCanvas.toDataURL("image/png");
-        const opened = window.open(dataUrl, "_blank", "noopener,noreferrer");
-        if (opened) {
-          setStatus("新しいタブで画像を開きました。長押しして『写真に保存』を選択してください。");
-          return;
-        }
+        const iosUrl = URL.createObjectURL(blob);
+        setStatus("画像表示へ移動します。表示後に長押しして『写真に保存』を選択してください。");
+        window.location.assign(iosUrl);
+        return;
       }
 
       const link = document.createElement("a");
