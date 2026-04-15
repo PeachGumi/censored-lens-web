@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-16";
+  const APP_VERSION = "2026.04.15-17";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -83,6 +83,7 @@
   const materialImages = new Map();
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
+  let lastTouchX = null;
   let lastTouchY = null;
 
   function normalizeLabelText(value) {
@@ -125,8 +126,18 @@
     return null;
   }
 
-  function canScrollInDirection(scroller, deltaY) {
+  function canScrollInDirection(scroller, deltaX, deltaY) {
     if (!scroller) return false;
+    const prefersHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+
+    if (prefersHorizontal) {
+      const { scrollLeft, scrollWidth, clientWidth } = scroller;
+      if (scrollWidth <= clientWidth + 1) return false;
+      if (deltaX < 0) return scrollLeft > 0;
+      if (deltaX > 0) return scrollLeft + clientWidth < scrollWidth - 1;
+      return true;
+    }
+
     const { scrollTop, scrollHeight, clientHeight } = scroller;
     if (scrollHeight <= clientHeight + 1) return false;
     if (deltaY < 0) return scrollTop > 0;
@@ -1608,6 +1619,7 @@
       "touchstart",
       (event) => {
         if (!isTouchDevice) return;
+        lastTouchX = event.touches?.[0]?.clientX ?? null;
         lastTouchY = event.touches?.[0]?.clientY ?? null;
       },
       { passive: true }
@@ -1621,13 +1633,17 @@
           return;
         }
 
+        const currentX = event.touches?.[0]?.clientX;
         const currentY = event.touches?.[0]?.clientY;
+        const deltaX =
+          typeof currentX === "number" && typeof lastTouchX === "number" ? lastTouchX - currentX : 0;
         const deltaY =
           typeof currentY === "number" && typeof lastTouchY === "number" ? lastTouchY - currentY : 0;
+        lastTouchX = typeof currentX === "number" ? currentX : lastTouchX;
         lastTouchY = typeof currentY === "number" ? currentY : lastTouchY;
 
         const scroller = findTouchScrollableParent(event.target);
-        if (canScrollInDirection(scroller, deltaY)) {
+        if (canScrollInDirection(scroller, deltaX, deltaY)) {
           return;
         }
         event.preventDefault();
@@ -1637,6 +1653,7 @@
     document.addEventListener(
       "touchend",
       () => {
+        lastTouchX = null;
         lastTouchY = null;
       },
       { passive: true }
@@ -1644,6 +1661,7 @@
     document.addEventListener(
       "touchcancel",
       () => {
+        lastTouchX = null;
         lastTouchY = null;
       },
       { passive: true }
