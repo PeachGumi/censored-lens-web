@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-23";
+  const APP_VERSION = "2026.04.15-24";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -735,14 +735,6 @@
     if (!effect || !isEffectVisible(effect)) return;
 
     const corners = getRotatedCorners(effect);
-    const handlePoints = getResizeHandlePoints(effect);
-    const visualHandleSize = isTouchDevice ? HANDLE_SIZE * 1.35 : HANDLE_SIZE;
-    const rotateHandle = getRotateHandlePoint(effect);
-    const topCenter = fromLocalPoint(
-      { x: 0, y: -effect.height / 2 },
-      getEffectCenter(effect),
-      effect.rotation || 0
-    );
 
     ctx.save();
     ctx.strokeStyle = "#4aa3ff";
@@ -756,37 +748,6 @@
     ctx.closePath();
     ctx.stroke();
     ctx.setLineDash([]);
-
-    ctx.beginPath();
-    ctx.moveTo(topCenter.x, topCenter.y);
-    ctx.lineTo(rotateHandle.x, rotateHandle.y);
-    ctx.stroke();
-
-    for (const point of Object.values(handlePoints)) {
-      ctx.fillStyle = "#4aa3ff";
-      ctx.fillRect(
-        point.x - visualHandleSize / 2,
-        point.y - visualHandleSize / 2,
-        visualHandleSize,
-        visualHandleSize
-      );
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        point.x - visualHandleSize / 2,
-        point.y - visualHandleSize / 2,
-        visualHandleSize,
-        visualHandleSize
-      );
-    }
-
-    ctx.beginPath();
-    ctx.fillStyle = "#4aa3ff";
-    ctx.arc(rotateHandle.x, rotateHandle.y, visualHandleSize * 0.58, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
-    ctx.stroke();
     ctx.restore();
   }
 
@@ -1289,15 +1250,47 @@
     };
   }
 
-  function startTransformGesture(event) {
-    if (!isTouchDevice || !baseCanvas) return;
-    if (!event.touches || event.touches.length < 2) return;
-    const effect = getEffectById(selectedEffectId);
-    if (!effect) return;
+  function isGestureExcludedTarget(node) {
+    const target = node instanceof Element ? node : null;
+    if (!target) return false;
+    return Boolean(
+      target.closest(
+        '#mobileControlsPanel, #dropzone, #imagePickerCompact, #blockedTextEditor, input, textarea, select, button, label, summary, a'
+      )
+    );
+  }
 
-    const touchInfo = getTouchPairInfo(event.touches[0], event.touches[1]);
+  function startSingleTouchGesture(touch) {
+    if (!isTouchDevice || !baseCanvas) return false;
+    const effect = getEffectById(selectedEffectId);
+    if (!effect) return false;
+
+    const point = getCanvasPointFromClient(touch.clientX, touch.clientY);
     gestureState = {
       id: effect.id,
+      mode: "single",
+      startPoint: point,
+      origin: {
+        x: effect.x,
+        y: effect.y,
+        width: effect.width,
+        height: effect.height,
+        rotation: effect.rotation || 0
+      }
+    };
+    dragState = null;
+    return true;
+  }
+
+  function startMultiTouchGesture(touchA, touchB) {
+    if (!isTouchDevice || !baseCanvas) return false;
+    const effect = getEffectById(selectedEffectId);
+    if (!effect) return false;
+
+    const touchInfo = getTouchPairInfo(touchA, touchB);
+    gestureState = {
+      id: effect.id,
+      mode: "multi",
       startCenter: touchInfo.center,
       startDistance: Math.max(1, touchInfo.distance),
       startAngle: touchInfo.angle,
@@ -1312,16 +1305,15 @@
     };
 
     dragState = null;
-    event.preventDefault();
+    return true;
   }
 
-  function updateTransformGesture(event) {
-    if (!gestureState || !baseCanvas) return;
-    if (!event.touches || event.touches.length < 2) return;
+  function updateTransformGesture(touchA, touchB) {
+    if (!gestureState || !baseCanvas || gestureState.mode !== "multi") return;
     const effect = getEffectById(gestureState.id);
     if (!effect) return;
 
-    const touchInfo = getTouchPairInfo(event.touches[0], event.touches[1]);
+    const touchInfo = getTouchPairInfo(touchA, touchB);
     const scale = touchInfo.distance / Math.max(1, gestureState.startDistance);
     const scaledW = Math.max(MIN_EFFECT_SIZE, gestureState.origin.width * scale);
     const scaledH = Math.max(MIN_EFFECT_SIZE, gestureState.origin.height * scale);
@@ -1356,7 +1348,31 @@
     effect.rotation = normalizeRotation(gestureState.origin.rotation + radToDeg(deltaAngle));
 
     renderCanvas();
-    event.preventDefault();
+  }
+
+  function updateSingleTouchGesture(touch) {
+    if (!gestureState || !baseCanvas || gestureState.mode !== "single") return;
+    const effect = getEffectById(gestureState.id);
+    if (!effect) return;
+
+    const point = getCanvasPointFromClient(touch.clientX, touch.clientY);
+    const dx = point.x - gestureState.startPoint.x;
+    const dy = point.y - gestureState.startPoint.y;
+    const clamped = clampRect(
+      {
+        x: gestureState.origin.x + dx,
+        y: gestureState.origin.y + dy,
+        width: gestureState.origin.width,
+        height: gestureState.origin.height
+      },
+      baseCanvas.width,
+      baseCanvas.height
+    );
+    effect.x = clamped.x;
+    effect.y = clamped.y;
+    effect.width = clamped.width;
+    effect.height = clamped.height;
+    renderCanvas();
   }
 
   function endTransformGestureIfNeeded(event) {
@@ -1379,23 +1395,10 @@
     );
   }
 
-  function hitHandle(effect, point) {
-    const hitRadius = isTouchDevice ? HANDLE_SIZE * 1.7 : HANDLE_SIZE;
-    const handlePoints = getResizeHandlePoints(effect);
-    for (const [name, h] of Object.entries(handlePoints)) {
-      if (pointNear(point, h, hitRadius)) return { mode: "resize", handle: name };
-    }
-    const rotateHandle = getRotateHandlePoint(effect);
-    if (pointNear(point, rotateHandle, hitRadius)) return { mode: "rotate", handle: "rotate" };
-    return null;
-  }
-
   function hitTest(point) {
     const visible = effects.filter(isEffectVisible);
     for (let i = visible.length - 1; i >= 0; i -= 1) {
       const effect = visible[i];
-      const handleHit = hitHandle(effect, point);
-      if (handleHit) return { effect, ...handleHit };
       if (pointInEffect(effect, point)) return { effect, mode: "move", handle: null };
     }
     return null;
@@ -1700,26 +1703,6 @@
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
-    canvas.addEventListener(
-      "touchstart",
-      (event) => {
-        if (event.touches && event.touches.length >= 2) {
-          startTransformGesture(event);
-        }
-      },
-      { passive: false }
-    );
-    canvas.addEventListener(
-      "touchmove",
-      (event) => {
-        if (event.touches && event.touches.length >= 2) {
-          updateTransformGesture(event);
-        }
-      },
-      { passive: false }
-    );
-    canvas.addEventListener("touchend", endTransformGestureIfNeeded, { passive: true });
-    canvas.addEventListener("touchcancel", endTransformGestureIfNeeded, { passive: true });
     window.addEventListener("resize", () => syncBlockedTextEditor());
 
     window.addEventListener("keydown", (event) => {
@@ -1764,15 +1747,46 @@
       "touchstart",
       (event) => {
         if (!isTouchDevice) return;
+
+        if (
+          selectedEffectId != null &&
+          !isGestureExcludedTarget(event.target) &&
+          event.touches &&
+          event.touches.length >= 1
+        ) {
+          const started =
+            event.touches.length >= 2
+              ? startMultiTouchGesture(event.touches[0], event.touches[1])
+              : startSingleTouchGesture(event.touches[0]);
+          if (started) {
+            event.preventDefault();
+            return;
+          }
+        }
+
         lastTouchX = event.touches?.[0]?.clientX ?? null;
         lastTouchY = event.touches?.[0]?.clientY ?? null;
       },
-      { passive: true }
+      { passive: false }
     );
     document.addEventListener(
       "touchmove",
       (event) => {
         if (!isTouchDevice) return;
+
+        if (gestureState) {
+          if (gestureState.mode === "multi" && event.touches && event.touches.length >= 2) {
+            updateTransformGesture(event.touches[0], event.touches[1]);
+            event.preventDefault();
+            return;
+          }
+          if (gestureState.mode === "single" && event.touches && event.touches.length >= 1) {
+            updateSingleTouchGesture(event.touches[0]);
+            event.preventDefault();
+            return;
+          }
+        }
+
         if (event.touches && event.touches.length > 1) {
           event.preventDefault();
           return;
@@ -1803,6 +1817,8 @@
     document.addEventListener(
       "touchend",
       (event) => {
+        endTransformGestureIfNeeded(event);
+
         if (isTouchDevice) {
           const now = Date.now();
           const changedTouch = event.changedTouches?.[0];
@@ -1845,7 +1861,8 @@
     );
     document.addEventListener(
       "touchcancel",
-      () => {
+      (event) => {
+        endTransformGestureIfNeeded(event);
         lastTouchX = null;
         lastTouchY = null;
       },
