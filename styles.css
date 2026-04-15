@@ -463,10 +463,25 @@ button:disabled {
     display: block;
     list-style: none;
     cursor: pointer;
-    font-size: 13px;
-    color: #c6d0dd;
-    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 11px 14px;
     user-select: none;
+    border-radius: 10px;
+    border: 1px solid #3d8bfd;
+    background: linear-gradient(135deg, #2f81f7, #1f6fe0);
+    box-shadow: 0 6px 14px rgba(10, 43, 91, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .controlsSummary::after {
+    content: "▼";
+    font-size: 11px;
+    opacity: 0.95;
+    transition: transform 0.15s ease;
   }
 
   .controlsSummary::-webkit-details-marker {
@@ -474,7 +489,13 @@ button:disabled {
   }
 
   .controlsPanel[open] .controlsSummary {
-    border-bottom: 1px solid #283042;
+    border-bottom: 1px solid #2d6fcb;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .controlsPanel[open] .controlsSummary::after {
+    transform: rotate(180deg);
   }
 
   .controlsPanelBody {
