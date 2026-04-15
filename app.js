@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-09";
+  const APP_VERSION = "2026.04.15-10";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -50,6 +50,7 @@
   const blockedTextEditorInput = document.getElementById("blockedTextEditorInput");
   const addMosaicButton = document.getElementById("addMosaicButton");
   const addBlockedButton = document.getElementById("addBlockedButton");
+  const addMaterialButton = document.getElementById("addMaterialButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
   const status = document.getElementById("status");
   const canvas = document.getElementById("resultCanvas");
@@ -77,6 +78,7 @@
   let detectorProfile = "tiny";
   let blockedEditorTargetId = null;
   let materials = [];
+  let selectedMaterialId = null;
   const materialImages = new Map();
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
@@ -203,6 +205,7 @@
     downloadButton.disabled = busy || !hasImage;
     addMosaicButton.disabled = busy || !hasImage;
     addBlockedButton.disabled = busy || !hasImage;
+    addMaterialButton.disabled = busy || !hasImage || !selectedMaterialId;
     deleteEffectButton.disabled = busy || selectedEffectId == null;
     updateImagePickerVisibility();
   }
@@ -287,7 +290,11 @@
       logDebug(`materials load failed: ${err?.message || err}`);
       materials = [];
     }
+    if (!selectedMaterialId || !getMaterialById(selectedMaterialId)) {
+      selectedMaterialId = materials.length ? materials[0].id : null;
+    }
     renderMaterialsPanel();
+    refreshButtons();
   }
 
   function renderMaterialsPanel() {
@@ -305,9 +312,22 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "materialButton";
-      button.textContent = material.name;
-      button.addEventListener("click", async () => {
-        await addMaterialEffect(material.id);
+      button.title = material.name;
+      button.setAttribute("aria-label", `素材 ${material.name}`);
+      if (selectedMaterialId === material.id) {
+        button.classList.add("is-selected");
+      }
+
+      const thumb = document.createElement("img");
+      thumb.src = material.url;
+      thumb.alt = material.name;
+      thumb.loading = "lazy";
+      button.appendChild(thumb);
+
+      button.addEventListener("click", () => {
+        selectedMaterialId = material.id;
+        renderMaterialsPanel();
+        refreshButtons();
       });
       materialsList.appendChild(button);
     }
@@ -1400,6 +1420,10 @@
     processButton.addEventListener("click", () => processCurrentImage());
     addMosaicButton.addEventListener("click", () => addEffect("mosaic"));
     addBlockedButton.addEventListener("click", () => addEffect("blocked"));
+    addMaterialButton.addEventListener("click", async () => {
+      if (!selectedMaterialId) return;
+      await addMaterialEffect(selectedMaterialId);
+    });
     deleteEffectButton.addEventListener("click", () => deleteSelectedEffect());
 
     mosaicScaleInput.addEventListener("input", () => {
