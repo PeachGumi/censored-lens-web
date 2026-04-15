@@ -356,10 +356,16 @@ button:disabled {
 }
 
 @media (max-width: 768px) {
+  html,
+  body {
+    height: 100svh;
+    overflow: hidden;
+  }
+
   .app {
     width: 100vw;
     margin: 0;
-    padding: 8px 0 64px;
+    padding: 6px 0 56px;
     min-height: 100svh;
     height: 100svh;
     display: flex;
@@ -368,8 +374,8 @@ button:disabled {
   }
 
   .header h1 {
-    font-size: 20px;
-    margin-bottom: 6px;
+    font-size: 17px;
+    margin-bottom: 4px;
     white-space: nowrap;
     line-height: 1.1;
   }
@@ -440,7 +446,7 @@ button:disabled {
     margin-right: 0;
     min-height: 0;
     height: auto;
-    padding: 6px;
+    padding: 4px 6px;
     overflow: hidden;
     display: flex;
     flex: 1 1 auto;
@@ -507,7 +513,11 @@ button:disabled {
 
   .controlsPanelBody {
     padding: 0 8px 8px;
-    max-height: 42svh;
-    overflow: auto;
+    max-height: 38svh;
+    overflow: hidden;
+  }
+
+  .imagePickerCompact {
+    margin: 6px 0 2px;
   }
 }

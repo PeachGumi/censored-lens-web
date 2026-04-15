@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-13";
+  const APP_VERSION = "2026.04.15-14";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -45,6 +45,7 @@
   const modeInfo = document.getElementById("modeInfo");
   const materialsList = document.getElementById("materialsList");
   const mobileControlsPanel = document.getElementById("mobileControlsPanel");
+  const controlsSummary = document.getElementById("controlsSummary");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const previewArea = document.getElementById("previewArea");
   const blockedTextEditor = document.getElementById("blockedTextEditor");
@@ -211,6 +212,13 @@
   function setBusy(nextBusy) {
     busy = nextBusy;
     refreshButtons();
+  }
+
+  function updateControlsSummaryLabel() {
+    if (!controlsSummary || !mobileControlsPanel) return;
+    controlsSummary.textContent = mobileControlsPanel.hasAttribute("open")
+      ? "操作を閉じる"
+      : "操作を開く";
   }
 
   function selectEffect(id) {
@@ -1518,6 +1526,12 @@
         }
       }
     });
+
+    if (mobileControlsPanel) {
+      mobileControlsPanel.addEventListener("toggle", () => {
+        updateControlsSummaryLabel();
+      });
+    }
   }
 
   async function start() {
@@ -1530,6 +1544,7 @@
       } else {
         mobileControlsPanel.setAttribute("open", "");
       }
+      updateControlsSummaryLabel();
     }
     if (blockedTextEditorInput) blockedTextEditorInput.value = EYE_LABEL_TEXT;
     setupDnD();
