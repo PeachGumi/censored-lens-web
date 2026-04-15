@@ -421,7 +421,7 @@ button:disabled {
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
     min-height: 220px;
-    height: min(52svh, 520px);
+    height: clamp(240px, 62vw, 460px);
     border-radius: 0;
     border-left: 0;
     border-right: 0;
