@@ -213,12 +213,8 @@ button:disabled {
   padding: 8px 10px;
 }
 
-#addMaterialButton {
-  grid-column: 1;
-}
-
 #deleteEffectButton {
-  grid-column: 2;
+  grid-column: 1;
 }
 
 #processButton {
