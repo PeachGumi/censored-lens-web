@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-22";
+  const APP_VERSION = "2026.04.15-23";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -75,6 +75,7 @@
   let effects = [];
   let selectedEffectId = null;
   let dragState = null;
+  let gestureState = null;
   let nextEffectId = 1;
   let busy = false;
   let detectorProfile = "tiny";
@@ -1265,6 +1266,106 @@
     };
   }
 
+  function getCanvasPointFromClient(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / Math.max(1, rect.width);
+    const scaleY = canvas.height / Math.max(1, rect.height);
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  function getTouchPairInfo(touchA, touchB) {
+    const pointA = getCanvasPointFromClient(touchA.clientX, touchA.clientY);
+    const pointB = getCanvasPointFromClient(touchB.clientX, touchB.clientY);
+    return {
+      center: {
+        x: (pointA.x + pointB.x) * 0.5,
+        y: (pointA.y + pointB.y) * 0.5
+      },
+      distance: Math.hypot(pointB.x - pointA.x, pointB.y - pointA.y),
+      angle: Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x)
+    };
+  }
+
+  function startTransformGesture(event) {
+    if (!isTouchDevice || !baseCanvas) return;
+    if (!event.touches || event.touches.length < 2) return;
+    const effect = getEffectById(selectedEffectId);
+    if (!effect) return;
+
+    const touchInfo = getTouchPairInfo(event.touches[0], event.touches[1]);
+    gestureState = {
+      id: effect.id,
+      startCenter: touchInfo.center,
+      startDistance: Math.max(1, touchInfo.distance),
+      startAngle: touchInfo.angle,
+      origin: {
+        x: effect.x,
+        y: effect.y,
+        width: effect.width,
+        height: effect.height,
+        rotation: effect.rotation || 0
+      },
+      effectCenter: getEffectCenter(effect)
+    };
+
+    dragState = null;
+    event.preventDefault();
+  }
+
+  function updateTransformGesture(event) {
+    if (!gestureState || !baseCanvas) return;
+    if (!event.touches || event.touches.length < 2) return;
+    const effect = getEffectById(gestureState.id);
+    if (!effect) return;
+
+    const touchInfo = getTouchPairInfo(event.touches[0], event.touches[1]);
+    const scale = touchInfo.distance / Math.max(1, gestureState.startDistance);
+    const scaledW = Math.max(MIN_EFFECT_SIZE, gestureState.origin.width * scale);
+    const scaledH = Math.max(MIN_EFFECT_SIZE, gestureState.origin.height * scale);
+    const deltaCenterX = touchInfo.center.x - gestureState.startCenter.x;
+    const deltaCenterY = touchInfo.center.y - gestureState.startCenter.y;
+    const nextCenter = {
+      x: gestureState.effectCenter.x + deltaCenterX,
+      y: gestureState.effectCenter.y + deltaCenterY
+    };
+
+    const candidate = {
+      x: nextCenter.x - scaledW / 2,
+      y: nextCenter.y - scaledH / 2,
+      width: scaledW,
+      height: scaledH
+    };
+    const clamped =
+      effect.type === "material"
+        ? clampRectKeepingAspect(
+            candidate,
+            baseCanvas.width,
+            baseCanvas.height,
+            effect.aspectRatio || gestureState.origin.width / Math.max(1, gestureState.origin.height)
+          )
+        : clampRect(candidate, baseCanvas.width, baseCanvas.height);
+
+    effect.x = clamped.x;
+    effect.y = clamped.y;
+    effect.width = clamped.width;
+    effect.height = clamped.height;
+    const deltaAngle = touchInfo.angle - gestureState.startAngle;
+    effect.rotation = normalizeRotation(gestureState.origin.rotation + radToDeg(deltaAngle));
+
+    renderCanvas();
+    event.preventDefault();
+  }
+
+  function endTransformGestureIfNeeded(event) {
+    if (!gestureState) return;
+    if (event.touches && event.touches.length >= 2) return;
+    gestureState = null;
+    refreshButtons();
+  }
+
   function pointNear(a, b, distance) {
     return Math.hypot(a.x - b.x, a.y - b.y) <= distance;
   }
@@ -1311,6 +1412,7 @@
   }
 
   function onPointerDown(event) {
+    if (gestureState) return;
     if (busy || !baseCanvas) return;
     const point = getCanvasPoint(event);
     const hit = hitTest(point);
@@ -1365,6 +1467,7 @@
   }
 
   function onPointerMove(event) {
+    if (gestureState) return;
     if (!baseCanvas) return;
     const point = getCanvasPoint(event);
 
@@ -1455,6 +1558,7 @@
   }
 
   function onPointerUp(event) {
+    if (gestureState) return;
     if (!dragState) return;
     const wasTap = !dragState.moved;
     const tappedBlockedSelectedTwice =
@@ -1596,6 +1700,26 @@
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener(
+      "touchstart",
+      (event) => {
+        if (event.touches && event.touches.length >= 2) {
+          startTransformGesture(event);
+        }
+      },
+      { passive: false }
+    );
+    canvas.addEventListener(
+      "touchmove",
+      (event) => {
+        if (event.touches && event.touches.length >= 2) {
+          updateTransformGesture(event);
+        }
+      },
+      { passive: false }
+    );
+    canvas.addEventListener("touchend", endTransformGestureIfNeeded, { passive: true });
+    canvas.addEventListener("touchcancel", endTransformGestureIfNeeded, { passive: true });
     window.addEventListener("resize", () => syncBlockedTextEditor());
 
     window.addEventListener("keydown", (event) => {
