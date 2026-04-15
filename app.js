@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-05";
+  const APP_VERSION = "2026.04.15-06";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -43,8 +43,9 @@
   const buildInfo = document.getElementById("buildInfo");
   const modeInfo = document.getElementById("modeInfo");
   const mosaicScaleInput = document.getElementById("mosaicScale");
-  const blockedToggle = document.getElementById("blockedToggle");
-  const blockedTextInput = document.getElementById("blockedTextInput");
+  const previewArea = document.getElementById("previewArea");
+  const blockedTextEditor = document.getElementById("blockedTextEditor");
+  const blockedTextEditorInput = document.getElementById("blockedTextEditorInput");
   const addMosaicButton = document.getElementById("addMosaicButton");
   const addBlockedButton = document.getElementById("addBlockedButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
@@ -72,13 +73,16 @@
   let nextEffectId = 1;
   let busy = false;
   let detectorProfile = "tiny";
-  let eyeLabelText = EYE_LABEL_TEXT;
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
 
-  function getEyeLabelText() {
-    const normalized = String(eyeLabelText || "").replace(/\s+/g, " ").trim();
+  function normalizeLabelText(value) {
+    const normalized = String(value || "").replace(/\s+/g, " ").trim();
     return normalized || EYE_LABEL_TEXT;
+  }
+
+  function getBlockedLabel(effect) {
+    return normalizeLabelText(effect?.text);
   }
 
   function logDebug(message) {
@@ -184,7 +188,6 @@
   }
 
   function isEffectVisible(effect) {
-    if (effect.type === "blocked") return blockedToggle.checked;
     return true;
   }
 
@@ -208,6 +211,31 @@
     selectedEffectId = id;
     refreshButtons();
     renderCanvas();
+    syncBlockedTextEditor();
+  }
+
+  function placeBlockedTextEditor(effect) {
+    if (!blockedTextEditor || !previewArea || !canvas || !baseCanvas) return;
+    const center = getEffectCenter(effect);
+    const canvasRect = canvas.getBoundingClientRect();
+    const previewRect = previewArea.getBoundingClientRect();
+    const x = canvasRect.left - previewRect.left + (center.x / canvas.width) * canvasRect.width;
+    const y = canvasRect.top - previewRect.top + (center.y / canvas.height) * canvasRect.height;
+    blockedTextEditor.style.left = `${x}px`;
+    blockedTextEditor.style.top = `${y}px`;
+  }
+
+  function syncBlockedTextEditor() {
+    if (!blockedTextEditor || !blockedTextEditorInput) return;
+    const effect = getEffectById(selectedEffectId);
+    if (!effect || effect.type !== "blocked") {
+      blockedTextEditor.classList.add("is-hidden");
+      return;
+    }
+
+    blockedTextEditor.classList.remove("is-hidden");
+    blockedTextEditorInput.value = getBlockedLabel(effect);
+    placeBlockedTextEditor(effect);
   }
 
   function clearMosaicLayerCache() {
@@ -385,7 +413,7 @@
   }
 
   function makeEffect(type, rect, rotation = 0) {
-    return {
+    const effect = {
       id: nextEffectId++,
       type,
       x: rect.x,
@@ -394,6 +422,10 @@
       height: rect.height,
       rotation
     };
+    if (type === "blocked") {
+      effect.text = EYE_LABEL_TEXT;
+    }
+    return effect;
   }
 
   function getMosaicLayer(pixelSize) {
@@ -463,7 +495,7 @@
     targetCtx.clip();
 
     // Fit text to the clipped band width so glyphs never exceed the black background.
-    const labelText = getEyeLabelText();
+    const labelText = getBlockedLabel(effect);
     for (let i = 0; i < 20; i += 1) {
       targetCtx.font = `700 ${fontSize}px sans-serif`;
       if (targetCtx.measureText(labelText).width <= maxTextW) break;
@@ -558,6 +590,7 @@
     }
 
     drawSelection();
+    syncBlockedTextEditor();
   }
 
   function drawImageWithoutSelection(targetCtx, targetCanvas) {
@@ -912,9 +945,7 @@
       const next = [];
       for (const face of faces) {
         next.push(makeEffect("mosaic", face.faceRect, 0));
-        if (blockedToggle.checked) {
-          next.push(makeEffect("blocked", face.blockedRect, face.blockedRotation));
-        }
+        next.push(makeEffect("blocked", face.blockedRect, face.blockedRotation));
       }
       effects = next;
       selectEffect(effects.length ? effects[0].id : null);
@@ -933,7 +964,6 @@
 
   function addEffect(type) {
     if (!baseCanvas) return;
-    if (type === "blocked") blockedToggle.checked = true;
     const baseW = type === "blocked" ? baseCanvas.width * 0.32 : baseCanvas.width * 0.24;
     const baseH = type === "blocked" ? baseCanvas.height * 0.08 : baseCanvas.height * 0.2;
     const minSize = isTouchDevice ? 34 : MIN_EFFECT_SIZE;
@@ -1225,19 +1255,15 @@
       renderCanvas();
     });
 
-    blockedToggle.addEventListener("change", () => {
-      const selected = getEffectById(selectedEffectId);
-      if (selected && selected.type === "blocked" && !blockedToggle.checked) {
-        selectEffect(null);
-      }
-      renderCanvas();
-      refreshButtons();
-    });
-
-    if (blockedTextInput) {
-      blockedTextInput.addEventListener("input", () => {
-        eyeLabelText = blockedTextInput.value;
+    if (blockedTextEditorInput) {
+      blockedTextEditorInput.addEventListener("input", () => {
+        const selected = getEffectById(selectedEffectId);
+        if (!selected || selected.type !== "blocked") return;
+        selected.text = normalizeLabelText(blockedTextEditorInput.value);
         renderCanvas();
+      });
+      blockedTextEditorInput.addEventListener("pointerdown", (event) => {
+        event.stopPropagation();
       });
     }
 
@@ -1256,6 +1282,7 @@
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("resize", () => syncBlockedTextEditor());
 
     window.addEventListener("keydown", (event) => {
       if ((event.key === "Delete" || event.key === "Backspace") && selectedEffectId != null) {
@@ -1272,10 +1299,7 @@
     logDebug(`app start: version ${APP_VERSION}`);
     if (buildInfo) buildInfo.textContent = `build ${APP_VERSION}`;
     if (modeInfo) modeInfo.textContent = "mode: loading";
-    if (blockedTextInput) {
-      blockedTextInput.value = EYE_LABEL_TEXT;
-      eyeLabelText = blockedTextInput.value;
-    }
+    if (blockedTextEditorInput) blockedTextEditorInput.value = EYE_LABEL_TEXT;
     setupDnD();
     setupEvents();
     updateImagePickerVisibility();

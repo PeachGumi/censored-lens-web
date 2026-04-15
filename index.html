@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.15-05" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.15-06" />
   </head>
   <body>
     <main class="app">
@@ -22,8 +22,18 @@
         <input id="fileInput" type="file" accept="image/*" />
       </section>
 
-      <section class="preview" aria-label="画像プレビュー領域">
+      <section id="previewArea" class="preview" aria-label="画像プレビュー領域">
         <canvas id="resultCanvas" class="canvas" aria-label="処理結果"></canvas>
+        <div id="blockedTextEditor" class="blockedTextEditor is-hidden">
+          <input
+            id="blockedTextEditorInput"
+            type="text"
+            maxlength="24"
+            value="BLOCKED"
+            placeholder="BLOCKED"
+            aria-label="目線テキスト編集"
+          />
+        </div>
       </section>
       <section id="imagePickerCompact" class="imagePickerCompact" hidden>
         <label id="changeImageButton" class="pickButton smallPickButton" for="fileInput">別の画像を選択</label>
@@ -34,21 +44,6 @@
           <label class="control control-slider">
             <span>モザイク強度</span>
             <input id="mosaicScale" type="range" min="6" max="40" value="14" />
-          </label>
-          <label class="control control-check">
-            <input id="blockedToggle" type="checkbox" checked />
-            <span>目線「BLOCKED」を表示</span>
-          </label>
-          <label class="control control-text" for="blockedTextInput">
-            <span>目線テキスト</span>
-            <input
-              id="blockedTextInput"
-              type="text"
-              maxlength="24"
-              value="BLOCKED"
-              placeholder="BLOCKED"
-              aria-label="目線テキスト"
-            />
           </label>
         </div>
 
@@ -69,6 +64,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=2026.04.15-05"></script>
+    <script src="./app.js?v=2026.04.15-06"></script>
   </body>
 </html>

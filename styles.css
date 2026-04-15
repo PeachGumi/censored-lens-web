@@ -144,41 +144,10 @@ button:disabled {
   min-height: 36px;
 }
 
-.control-check {
-  gap: 8px;
-  justify-content: flex-start;
-}
-
-.control-check input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-}
-
 .control-slider {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-}
-
-.control-text {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-}
-
-.control-text input[type="text"] {
-  width: 100%;
-  min-height: 32px;
-  border-radius: 6px;
-  border: 1px solid #31405a;
-  background: #0f1521;
-  color: #e9edf1;
-  padding: 6px 8px;
-}
-
-.control-text input[type="text"]:focus {
-  outline: 2px solid #4aa3ff;
-  outline-offset: 1px;
 }
 
 .actionGrid {
@@ -253,6 +222,7 @@ button:disabled {
 }
 
 .preview {
+  position: relative;
   width: 100%;
   min-height: 280px;
   height: min(66vh, 680px);
@@ -264,6 +234,29 @@ button:disabled {
   justify-content: center;
   overflow: hidden;
   padding: 10px;
+}
+
+.blockedTextEditor {
+  position: absolute;
+  z-index: 12;
+  transform: translate(-50%, -120%);
+  pointer-events: auto;
+}
+
+.blockedTextEditor input {
+  width: min(220px, 48vw);
+  min-height: 30px;
+  border-radius: 6px;
+  border: 1px solid #31405a;
+  background: rgba(15, 21, 33, 0.94);
+  color: #e9edf1;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.blockedTextEditor input:focus {
+  outline: 2px solid #4aa3ff;
+  outline-offset: 1px;
 }
 
 .imagePickerCompact {
