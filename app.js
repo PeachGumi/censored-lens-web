@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-21";
+  const APP_VERSION = "2026.04.15-22";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -224,17 +224,15 @@
     };
   }
 
-  function getTouchHandleInset(effect) {
-    if (!isTouchDevice) return 0;
-    const maxInset = Math.max(0, Math.min(effect.width, effect.height) / 2 - 4);
-    return Math.max(0, Math.min(HANDLE_SIZE * 0.9, maxInset));
+  function getHandleOutset() {
+    return isTouchDevice ? HANDLE_SIZE * 0.55 : HANDLE_SIZE * 0.32;
   }
 
   function getResizeHandlePoints(effect) {
     const center = getEffectCenter(effect);
-    const inset = getTouchHandleInset(effect);
-    const hw = Math.max(2, effect.width / 2 - inset);
-    const hh = Math.max(2, effect.height / 2 - inset);
+    const outset = getHandleOutset();
+    const hw = effect.width / 2 + outset;
+    const hh = effect.height / 2 + outset;
     return {
       nw: fromLocalPoint({ x: -hw, y: -hh }, center, effect.rotation || 0),
       ne: fromLocalPoint({ x: hw, y: -hh }, center, effect.rotation || 0),
@@ -1326,9 +1324,9 @@
     const wasSelectedBeforeTap = selectedEffectId === hit.effect.id;
     selectEffect(hit.effect.id);
 
-    // On touch devices, allow immediate resize/rotate even on first tap.
-    // Keep single-tap-select behavior only for move mode.
-    if (!wasSelectedBeforeTap && hit.mode === "move") {
+    // First tap/click on an unselected effect only selects it.
+    // Drag/resize starts from the next interaction so touch scroll is not blocked.
+    if (!wasSelectedBeforeTap) {
       dragState = null;
       return;
     }
