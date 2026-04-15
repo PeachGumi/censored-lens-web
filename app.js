@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.16-01";
+  const APP_VERSION = "2026.04.16-02";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -95,11 +95,11 @@
 
   function normalizeLabelText(value) {
     const normalized = String(value || "").replace(/\s+/g, " ").trim();
-    return normalized || EYE_LABEL_TEXT;
+    return normalized;
   }
 
   function getBlockedLabel(effect) {
-    return normalizeLabelText(effect?.text);
+    return normalizeLabelText(effect?.text ?? EYE_LABEL_TEXT);
   }
 
   function logDebug(message) {
