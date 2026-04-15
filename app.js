@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-17";
+  const APP_VERSION = "2026.04.15-18";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -213,6 +213,25 @@
     const center = getEffectCenter(effect);
     const hw = effect.width / 2;
     const hh = effect.height / 2;
+    return {
+      nw: fromLocalPoint({ x: -hw, y: -hh }, center, effect.rotation || 0),
+      ne: fromLocalPoint({ x: hw, y: -hh }, center, effect.rotation || 0),
+      se: fromLocalPoint({ x: hw, y: hh }, center, effect.rotation || 0),
+      sw: fromLocalPoint({ x: -hw, y: hh }, center, effect.rotation || 0)
+    };
+  }
+
+  function getTouchHandleInset(effect) {
+    if (!isTouchDevice) return 0;
+    const maxInset = Math.max(0, Math.min(effect.width, effect.height) / 2 - 4);
+    return Math.max(0, Math.min(HANDLE_SIZE * 0.9, maxInset));
+  }
+
+  function getResizeHandlePoints(effect) {
+    const center = getEffectCenter(effect);
+    const inset = getTouchHandleInset(effect);
+    const hw = Math.max(2, effect.width / 2 - inset);
+    const hh = Math.max(2, effect.height / 2 - inset);
     return {
       nw: fromLocalPoint({ x: -hw, y: -hh }, center, effect.rotation || 0),
       ne: fromLocalPoint({ x: hw, y: -hh }, center, effect.rotation || 0),
@@ -636,6 +655,7 @@
 
   function drawMosaicEffect(effect, pixelSize) {
     const corners = getRotatedCorners(effect);
+    const handlePoints = getResizeHandlePoints(effect);
     const mosaicLayer = getMosaicLayer(pixelSize);
     ctx.save();
     ctx.beginPath();
@@ -740,7 +760,7 @@
     ctx.lineTo(rotateHandle.x, rotateHandle.y);
     ctx.stroke();
 
-    for (const point of Object.values(corners)) {
+    for (const point of Object.values(handlePoints)) {
       ctx.fillStyle = "#4aa3ff";
       ctx.fillRect(
         point.x - visualHandleSize / 2,
@@ -1259,8 +1279,8 @@
 
   function hitHandle(effect, point) {
     const hitRadius = isTouchDevice ? HANDLE_SIZE * 1.7 : HANDLE_SIZE;
-    const corners = getRotatedCorners(effect);
-    for (const [name, h] of Object.entries(corners)) {
+    const handlePoints = getResizeHandlePoints(effect);
+    for (const [name, h] of Object.entries(handlePoints)) {
       if (pointNear(point, h, hitRadius)) return { mode: "resize", handle: name };
     }
     const rotateHandle = getRotateHandlePoint(effect);
@@ -1630,6 +1650,11 @@
         if (!isTouchDevice) return;
         if (event.touches && event.touches.length > 1) {
           event.preventDefault();
+          return;
+        }
+
+        const touchTarget = event.target instanceof Element ? event.target : null;
+        if (touchTarget?.closest('input[type="range"]')) {
           return;
         }
 
