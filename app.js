@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-06";
+  const APP_VERSION = "2026.04.15-07";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -496,11 +496,16 @@
 
     // Fit text to the clipped band width so glyphs never exceed the black background.
     const labelText = getBlockedLabel(effect);
-    for (let i = 0; i < 20; i += 1) {
+    targetCtx.font = `700 ${fontSize}px sans-serif`;
+    const initialWidth = targetCtx.measureText(labelText).width;
+    if (initialWidth > maxTextW) {
+      const ratio = maxTextW / Math.max(1, initialWidth);
+      fontSize = Math.max(8, Math.floor(fontSize * ratio));
+    }
+    targetCtx.font = `700 ${fontSize}px sans-serif`;
+    while (targetCtx.measureText(labelText).width > maxTextW && fontSize > 8) {
+      fontSize -= 1;
       targetCtx.font = `700 ${fontSize}px sans-serif`;
-      if (targetCtx.measureText(labelText).width <= maxTextW) break;
-      fontSize = Math.max(8, fontSize - 1);
-      if (fontSize <= 8) break;
     }
 
     targetCtx.font = `700 ${fontSize}px sans-serif`;
@@ -979,6 +984,12 @@
     );
     const effect = makeEffect(type, rect, 0);
     effects.push(effect);
+    if (type === "blocked") {
+      selectEffect(null);
+      renderCanvas();
+      refreshButtons();
+      return;
+    }
     selectEffect(effect.id);
   }
 
