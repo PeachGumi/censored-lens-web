@@ -33,7 +33,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.16-02";
+  const APP_VERSION = "2026.04.16-03";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -1721,15 +1721,59 @@
       });
     }
 
-    downloadButton.addEventListener("click", () => {
+    downloadButton.addEventListener("click", async () => {
       if (!baseCanvas) return;
       const exportCanvas = document.createElement("canvas");
       const exportCtx = exportCanvas.getContext("2d");
       drawImageWithoutSelection(exportCtx, exportCanvas);
+
+      const fileName = "image-censor-studio-result.png";
+      const blob = await new Promise((resolve) => {
+        exportCanvas.toBlob((result) => resolve(result), "image/png");
+      });
+      if (!blob) {
+        setStatus("画像の書き出しに失敗しました。もう一度お試しください。");
+        return;
+      }
+
+      const iOSPattern = /iPhone|iPad|iPod/i;
+      const isIOS = iOSPattern.test(navigator.userAgent || "");
+      const shareFile = new File([blob], fileName, { type: "image/png" });
+      const canShareFile =
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [shareFile] });
+
+      if (canShareFile) {
+        try {
+          await navigator.share({
+            files: [shareFile],
+            title: "Image Censor Studio",
+            text: "編集した画像"
+          });
+          return;
+        } catch (err) {
+          if (err?.name !== "AbortError") {
+            logDebug(`share failed: ${err?.message || err}`);
+          }
+        }
+      }
+
+      if (isIOS) {
+        const dataUrl = exportCanvas.toDataURL("image/png");
+        const opened = window.open(dataUrl, "_blank", "noopener,noreferrer");
+        if (opened) {
+          setStatus("新しいタブで画像を開きました。長押しして『写真に保存』を選択してください。");
+          return;
+        }
+      }
+
       const link = document.createElement("a");
-      link.href = exportCanvas.toDataURL("image/png");
-      link.download = "image-censor-studio-result.png";
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = fileName;
       link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
 
     canvas.addEventListener("pointerdown", onPointerDown);
