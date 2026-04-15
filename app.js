@@ -1233,6 +1233,14 @@
 
     const wasSelectedBeforeTap = selectedEffectId === hit.effect.id;
     selectEffect(hit.effect.id);
+
+    // First tap/click on an unselected effect only selects it.
+    // Drag/resize starts from the next interaction so touch scroll is not blocked.
+    if (!wasSelectedBeforeTap) {
+      dragState = null;
+      return;
+    }
+
     const center = getEffectCenter(hit.effect);
     const corners = getRotatedCorners(hit.effect);
     const oppositeCorner =
