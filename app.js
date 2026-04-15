@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-04";
+  const APP_VERSION = "2026.04.15-05";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -44,6 +44,7 @@
   const modeInfo = document.getElementById("modeInfo");
   const mosaicScaleInput = document.getElementById("mosaicScale");
   const blockedToggle = document.getElementById("blockedToggle");
+  const blockedTextInput = document.getElementById("blockedTextInput");
   const addMosaicButton = document.getElementById("addMosaicButton");
   const addBlockedButton = document.getElementById("addBlockedButton");
   const deleteEffectButton = document.getElementById("deleteEffectButton");
@@ -71,8 +72,14 @@
   let nextEffectId = 1;
   let busy = false;
   let detectorProfile = "tiny";
+  let eyeLabelText = EYE_LABEL_TEXT;
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
+
+  function getEyeLabelText() {
+    const normalized = String(eyeLabelText || "").replace(/\s+/g, " ").trim();
+    return normalized || EYE_LABEL_TEXT;
+  }
 
   function logDebug(message) {
     const now = new Date();
@@ -456,9 +463,10 @@
     targetCtx.clip();
 
     // Fit text to the clipped band width so glyphs never exceed the black background.
+    const labelText = getEyeLabelText();
     for (let i = 0; i < 20; i += 1) {
       targetCtx.font = `700 ${fontSize}px sans-serif`;
-      if (targetCtx.measureText(EYE_LABEL_TEXT).width <= maxTextW) break;
+      if (targetCtx.measureText(labelText).width <= maxTextW) break;
       fontSize = Math.max(8, fontSize - 1);
       if (fontSize <= 8) break;
     }
@@ -467,7 +475,7 @@
     targetCtx.textAlign = "center";
     targetCtx.textBaseline = "middle";
     targetCtx.fillStyle = "#ffffff";
-    targetCtx.fillText(EYE_LABEL_TEXT, 0, 0);
+    targetCtx.fillText(labelText, 0, 0);
     targetCtx.restore();
   }
 
@@ -1226,6 +1234,13 @@
       refreshButtons();
     });
 
+    if (blockedTextInput) {
+      blockedTextInput.addEventListener("input", () => {
+        eyeLabelText = blockedTextInput.value;
+        renderCanvas();
+      });
+    }
+
     downloadButton.addEventListener("click", () => {
       if (!baseCanvas) return;
       const exportCanvas = document.createElement("canvas");
@@ -1257,6 +1272,10 @@
     logDebug(`app start: version ${APP_VERSION}`);
     if (buildInfo) buildInfo.textContent = `build ${APP_VERSION}`;
     if (modeInfo) modeInfo.textContent = "mode: loading";
+    if (blockedTextInput) {
+      blockedTextInput.value = EYE_LABEL_TEXT;
+      eyeLabelText = blockedTextInput.value;
+    }
     setupDnD();
     setupEvents();
     updateImagePickerVisibility();

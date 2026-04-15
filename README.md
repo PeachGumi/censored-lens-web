@@ -13,6 +13,7 @@
 1. 画像をドラッグ&ドロップ（または「画像を選択」）
 2. 「顔を検出してモザイク」で自動生成
 3. 必要に応じて「目線 BLOCKED」を切り替え
+4. 「目線テキスト」に好きな文字を入力（未入力時は `BLOCKED`）
 4. `モザイク追加 / 目線追加` で手動追加、ドラッグで移動、四隅ハンドルでサイズ変更
 5. 回転スライダーまたは枠上部の回転ハンドルで角度調整
 6. `選択を削除` または Deleteキーで削除
@@ -34,6 +35,23 @@
    - Build command: *(空欄)*
    - Build output directory: `/`
 4. Deploy
+
+## Cloudflare Pages 用 ZIP の自動作成
+
+`deploy/` 配下に、Cloudflare Pages 向けの配布 ZIP を作るスクリプトを用意しています。
+
+1. 実行
+
+```bash
+./deploy/make_cloudflare_zip.sh
+```
+
+2. 生成物
+
+- ステージングフォルダ: `deploy/cloudflare-pages/`
+- 配布 ZIP: `deploy/censored-lens-web-cloudflare.zip`
+
+このスクリプトは公開に必要なファイルのみをステージングし、`.DS_Store` など不要ファイルを除外して ZIP 化します。
 
 ## 注意
 

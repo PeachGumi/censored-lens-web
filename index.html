@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Censor Studio</title>
-    <link rel="stylesheet" href="./styles.css?v=2026.04.15-03" />
+    <link rel="stylesheet" href="./styles.css?v=2026.04.15-05" />
   </head>
   <body>
     <main class="app">
@@ -39,6 +39,17 @@
             <input id="blockedToggle" type="checkbox" checked />
             <span>目線「BLOCKED」を表示</span>
           </label>
+          <label class="control control-text" for="blockedTextInput">
+            <span>目線テキスト</span>
+            <input
+              id="blockedTextInput"
+              type="text"
+              maxlength="24"
+              value="BLOCKED"
+              placeholder="BLOCKED"
+              aria-label="目線テキスト"
+            />
+          </label>
         </div>
 
         <div class="actionGrid">
@@ -58,6 +69,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=2026.04.15-04"></script>
+    <script src="./app.js?v=2026.04.15-05"></script>
   </body>
 </html>
