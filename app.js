@@ -32,7 +32,7 @@
   const HANDLE_SIZE = 24;
   const ROTATE_HANDLE_OFFSET = 34;
   const MIN_EFFECT_SIZE = 20;
-  const APP_VERSION = "2026.04.15-07";
+  const APP_VERSION = "2026.04.15-08";
 
   const dropzone = document.getElementById("dropzone");
   const imagePickerCompact = document.getElementById("imagePickerCompact");
@@ -73,6 +73,7 @@
   let nextEffectId = 1;
   let busy = false;
   let detectorProfile = "tiny";
+  let blockedEditorTargetId = null;
   let mosaicLayerCache = { pixelSize: null, canvas: null };
   let debugLogLines = [];
 
@@ -208,6 +209,9 @@
   }
 
   function selectEffect(id) {
+    if (id !== selectedEffectId) {
+      blockedEditorTargetId = null;
+    }
     selectedEffectId = id;
     refreshButtons();
     renderCanvas();
@@ -228,7 +232,7 @@
   function syncBlockedTextEditor() {
     if (!blockedTextEditor || !blockedTextEditorInput) return;
     const effect = getEffectById(selectedEffectId);
-    if (!effect || effect.type !== "blocked") {
+    if (!effect || effect.type !== "blocked" || blockedEditorTargetId !== effect.id) {
       blockedTextEditor.classList.add("is-hidden");
       return;
     }
@@ -1065,6 +1069,7 @@
       return;
     }
 
+    const wasSelectedBeforeTap = selectedEffectId === hit.effect.id;
     selectEffect(hit.effect.id);
     const center = getEffectCenter(hit.effect);
     const corners = getRotatedCorners(hit.effect);
@@ -1074,8 +1079,11 @@
         : null;
     dragState = {
       id: hit.effect.id,
+      type: hit.effect.type,
       mode: hit.mode,
       handle: hit.handle,
+      wasSelected: wasSelectedBeforeTap,
+      moved: false,
       startPoint: point,
       origin: {
         x: hit.effect.x,
@@ -1107,6 +1115,9 @@
 
     const effect = getEffectById(dragState.id);
     if (!effect) return;
+
+    const movement = Math.hypot(point.x - dragState.startPoint.x, point.y - dragState.startPoint.y);
+    if (movement > 3) dragState.moved = true;
 
     if (dragState.mode === "move") {
       const dx = point.x - dragState.startPoint.x;
@@ -1165,6 +1176,18 @@
 
   function onPointerUp(event) {
     if (!dragState) return;
+    const wasTap = !dragState.moved;
+    const tappedBlockedSelectedTwice =
+      wasTap &&
+      dragState.mode === "move" &&
+      dragState.type === "blocked" &&
+      dragState.wasSelected &&
+      selectedEffectId === dragState.id;
+
+    if (tappedBlockedSelectedTwice) {
+      blockedEditorTargetId = dragState.id;
+    }
+
     try {
       canvas.releasePointerCapture(event.pointerId);
     } catch {
