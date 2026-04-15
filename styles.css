@@ -427,7 +427,7 @@ button:disabled {
   .app {
     width: 100vw;
     margin: 0;
-    padding: 6px 0 56px;
+    padding: 6px 0 calc(72px + env(safe-area-inset-bottom, 0px));
     min-height: 100svh;
     height: 100svh;
     display: flex;
@@ -531,12 +531,13 @@ button:disabled {
 
   .controlsPanel {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 30;
     margin-top: 0;
     border-top: 1px solid #283042;
+    border-radius: 12px;
     background: #0f1116;
     box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.35);
   }
