@@ -1,86 +1,91 @@
 # Image Censor Studio
 
-ブラウザ上で画像の顔を検出し、モザイク＋目線 `BLOCKED` を入れられる静的Webアプリです。  
-ドラッグ&ドロップ対応で、ビルド不要のため GitHub Pages / Cloudflare Pages にそのまま公開できます。
+画像の顔にモザイク・目線（黒帯＋文字）・素材スタンプを重ねて編集し、1枚の画像として保存できるブラウザアプリです。  
+ビルド不要の静的構成なので、ローカル確認も公開もシンプルです。
 
-## ローカル確認
+## 主な機能
+
+- 顔検出による自動配置（モザイク＋目線）
+- 手動追加（モザイク / 目線 / 素材）
+- 移動・拡大縮小・回転編集
+- 目線文字の編集（初期値: `BLOCKED`）
+- PNG保存
+
+## すぐに試す
 
 `index.html` をブラウザで開くだけで動作します。  
-（または任意の静的サーバーで配信）
+（任意の静的サーバー配信でも可）
 
 ## 使い方
 
-1. 画像をドラッグ&ドロップ（または「画像を選択」）
-2. 「顔を検出してモザイク」で自動生成
-3. 目線オブジェクトをタップ/クリックすると文字入力欄が表示され、好きな文字に編集可能（未入力時は `BLOCKED`）
-4. `モザイク追加 / 目線追加` で手動追加、ドラッグで移動、四隅ハンドルでサイズ変更
-5. 回転スライダーまたは枠上部の回転ハンドルで角度調整
-6. `選択を削除` または Deleteキーで削除
-7. 「画像を保存」でダウンロード
+1. 画像をドラッグ&ドロップ、または「画像を選択」で読み込む
+2. 「顔を検出してモザイク」を押して自動生成する
+3. 必要に応じて `モザイク追加 / 目線追加 / 素材` で手動調整する
+4. 効果オブジェクトを選択し、ドラッグで移動・四隅でサイズ変更・上部ハンドルで回転する
+5. 目線の文字を変更したい場合は、目線オブジェクトを選択して編集欄に入力する
+6. 不要なオブジェクトは `選択を削除`（または Delete / Backspace）で削除する
+7. 「画像を保存」で書き出す
 
-## 素材フォルダ運用（提案A）
+## 素材の追加方法
 
-- 素材フォルダ: `materials/`
+- 素材ファイル配置先: `materials/`
 - マニフェスト: `materials/manifest.json`
 
-アプリは `materials/manifest.json` を読み込んで、素材パネルに表示します。  
-現在は `materials/1f445.svg` を登録済みです。
+追加手順:
 
-新しい素材を追加する場合:
-
-1. `materials/` にファイルを置く
-2. `materials/manifest.json` の `materials` 配列へ追記する
+1. `materials/` に画像ファイルを追加する
+2. `materials/manifest.json` の `materials` 配列に素材情報を追記する
 3. ページを再読み込みする
 
-## GitHub Pages で公開
+## 公開（静的ホスティング）
 
-1. この `censored-lens-web` フォルダ内容を新規リポジトリへ push
-2. GitHub の **Settings → Pages**
+### GitHub Pages
+
+1. このフォルダ内容をリポジトリに push
+2. **Settings → Pages**
 3. Source を **Deploy from a branch**
-4. Branch を `main` / Folder を `/ (root)` に設定
-5. 数分後に公開URLが発行されます
+4. Branch: `main` / Folder: `/ (root)` を選択
+5. 公開URLで確認
 
-## Cloudflare Pages で公開
+### Cloudflare Pages
 
-1. Cloudflare Pages で「Create a project」
+1. Cloudflare Pages で **Create a project**
 2. GitHub リポジトリを接続
 3. Build settings:
    - Build command: *(空欄)*
    - Build output directory: `/`
 4. Deploy
 
-## Cloudflare Pages 用 ZIP の自動作成
+## Cloudflare Pages向けZIP作成
 
-`deploy/` 配下に、Cloudflare Pages 向けの配布 ZIP を作るスクリプトを用意しています。
-
-1. 実行
+配布用ZIPを作るスクリプトを用意しています。
 
 ```bash
 ./deploy/make_cloudflare_zip.sh
 ```
 
-2. 生成物
+生成物:
 
-- ステージングフォルダ: `deploy/cloudflare-pages/`
-- 配布 ZIP: `deploy/censored-lens-web-cloudflare.zip`
+- `deploy/cloudflare-pages/`（ステージング）
+- `deploy/censored-lens-web-cloudflare.zip`（配布ZIP）
 
-このスクリプトは公開に必要なファイルのみをステージングし、`.DS_Store` など不要ファイルを除外して ZIP 化します。
+不要ファイル（例: `.DS_Store`）を除外したうえで、公開に必要なファイルだけを含めます。
 
-## 注意
+## モデル読み込みについて
 
-- 顔検出モデルは CDN から読み込みます（初回は少し時間がかかります）。
-- 検出精度は画像内容・顔の角度・解像度によって変わります。
+- モデルは `./models` を優先して読み込み、失敗時にCDNへフォールバックします
+- CDN制限環境では `models/` 同梱運用が安定です
+- PCでは高精度モード（SSD）を優先利用します
 
-## モデル読み込み失敗への対策（推奨）
+同梱モデル（このリポジトリ）:
 
-CDNがブロックされる環境では、`models/` にモデルを同梱すると安定します。  
-アプリは `./models` を最優先で読み込み、失敗時にCDNへフォールバックします。
+- `tiny_face_detector_model-*`
+- `face_landmark_68_tiny_model-*`
+- `ssd_mobilenetv1_model-*`
 
-### このリポジトリの同梱モデル
+公開後は、画面の初期ステータスが `準備完了（高精度モード）` または `準備完了（軽量モード）` と表示されることを確認してください。
 
-- `tiny_face_detector_model-*`（軽量）
-- `face_landmark_68_tiny_model-*`（ランドマーク）
-- `ssd_mobilenetv1_model-*`（PC向け高精度）
+## 注意事項
 
-PCでは高精度モード（SSD）を優先利用する実装です。  
-GitHub Pages で公開後、画面の初期ステータスが `準備完了（高精度モード）` と表示されることを確認してください。
+- 初回はモデル読み込みに時間がかかる場合があります
+- 検出精度は画像の解像度・顔の向き・明るさなどに依存します
